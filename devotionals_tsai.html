@@ -1,1 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>蔡俊杰牧師｜每日靈修</title>
+<style>
+:root{
+  --fs:17px;
+  --c-primary:#6F9CC6;--c-primary-light:#DEE2E9;
+  --c-accent:#4A7FA5;
+  --c-text:#2C2C2A;--c-muted:#8EA2BE;
+  --c-border:#A4C4D8;--c-bg:#F4F7FA;--c-white:#FFFFFF;
+  --r:12px;--r-sm:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'PingFang TC','Noto Sans TC','Microsoft JhengHei',sans-serif;font-size:var(--fs);background:var(--c-bg);color:var(--c-text);line-height:1.8;-webkit-text-size-adjust:100%;}
 
+/* ── TOPBAR ── */
+.topbar{position:sticky;top:0;z-index:100;background:#6F9CC6;display:flex;align-items:center;justify-content:space-between;padding:8px 14px;gap:8px;}
+.topbar-left{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.topbar-label{color:#FFFFFF;font-size:12px;font-weight:700;}
+.tb-btn{background:rgba(255,255,255,.2);border:none;color:#FFFFFF;border-radius:6px;padding:5px 11px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;transition:background .15s;white-space:nowrap;}
+.tb-btn.active{background:rgba(255,255,255,.45);}
+.tb-btn:active{background:rgba(255,255,255,.6);}
+
+/* ── 下拉選單 ── */
+.passage-select{
+  appearance:none;-webkit-appearance:none;
+  background:rgba(255,255,255,.2);
+  border:none;color:#FFFFFF;
+  border-radius:6px;padding:5px 28px 5px 10px;
+  cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;
+  outline:none;max-width:150px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='white' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 8px center;
+}
+.passage-select option{background:#4A7FA5;color:#FFFFFF;}
+
+/* ── HERO ── */
+.hero{background:linear-gradient(135deg,#4A7FA5 0%,#6F9CC6 50%,#8EA2BE 100%);padding:28px 20px 24px;text-align:center;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;background:rgba(255,255,255,.08);border-radius:50%;}
+.hero::after{content:'';position:absolute;bottom:-20px;left:-20px;width:80px;height:80px;background:rgba(255,255,255,.06);border-radius:50%;}
+.hero-series{font-size:1.2em;color:rgba(255,255,255,.95);letter-spacing:.04em;margin-bottom:6px;font-weight:700;}
+.hero-passage{font-size:1em;font-weight:400;color:rgba(255,255,255,.85);letter-spacing:.05em;}
+
+/* ── CARDS ── */
+.card{margin:12px 10px 0;background:var(--c-white);border-radius:var(--r);border:1px solid var(--c-border);overflow:hidden;}
+.card:last-of-type{margin-bottom:16px;}
+.card-label{background:var(--c-primary);color:#fff;font-size:.85em;font-weight:700;letter-spacing:.08em;padding:7px 14px;text-align:center;}
+.card-body{padding:16px;}
+
+/* ── 內文 ── */
+.content{font-size:1em;line-height:1.9;color:var(--c-text);}
+.content p{margin-bottom:.9em;text-align:justify;}
+.content p:last-child{margin-bottom:0;}
+
+/* ── 反思問題 ── */
+.q-list{margin-top:0;}
+.q-item{display:flex;gap:10px;padding:10px 0;border-bottom:1px dashed var(--c-border);font-size:1em;line-height:1.75;color:var(--c-text);text-align:justify;}
+.q-item:last-child{border-bottom:none;}
+.q-num{flex-shrink:0;width:24px;height:24px;background:var(--c-primary);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8em;font-weight:700;margin-top:2px;}
+
+/* ── FOOTER ── */
+.footer{text-align:center;padding:20px 16px;color:var(--c-muted);font-size:.85em;line-height:1.8;margin-top:4px;}
+
+/* ── 載入狀態 ── */
+.loading{text-align:center;padding:60px 20px;color:var(--c-muted);font-size:1em;}
+.error{text-align:center;padding:40px 20px;color:#c0392b;font-size:.95em;line-height:1.8;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <span class="topbar-label">字級</span>
+    <button class="tb-btn" id="fS" onclick="setFont(14)">小</button>
+    <button class="tb-btn active" id="fM" onclick="setFont(17)">中</button>
+    <button class="tb-btn" id="fL" onclick="setFont(20)">大</button>
+    <button class="tb-btn" id="fXL" onclick="setFont(23)">特大</button>
+  </div>
+  <select class="passage-select" id="passageSelect" onchange="loadPassage(this.value)">
+    <option value="">載入中…</option>
+  </select>
+</div>
+
+<div id="mainContent">
+  <div class="loading">載入靈修內容中…</div>
+</div>
+
+<script>
+// ── 設定 ──────────────────────────────────────────
+const GITHUB_USER = 'linemenu';
+const GITHUB_REPO = 'linemenu';
+const GITHUB_FOLDER = 'devotionals-tsai';
+const SERIES_LABEL = '蔡俊杰牧師｜羅馬書靈修系列';
+// ─────────────────────────────────────────────────
+
+// 書卷中文名稱對照（可持續擴充）
+const BOOK_MAP = {
+  '羅馬書': { order: 45 },
+  '哥林多前書': { order: 46 },
+  '哥林多後書': { order: 47 },
+  '加拉太書': { order: 48 },
+  '以弗所書': { order: 49 },
+};
+
+// 檔名解析：「羅馬書1-1-7.txt」→ { book:'羅馬書', ch:1, vs:1, ve:7, label:'羅馬書 1:1-7' }
+function parseFilename(name) {
+  const base = name.replace(/\.txt$/i, '');
+  const match = base.match(/^(.+?)(\d+)-(\d+)-(\d+)$/);
+  if (!match) return null;
+  const [, book, ch, vs, ve] = match;
+  const bookOrder = (BOOK_MAP[book] || { order: 99 }).order;
+  return {
+    filename: name,
+    book: book.trim(),
+    ch: parseInt(ch),
+    vs: parseInt(vs),
+    ve: parseInt(ve),
+    bookOrder,
+    label: `${book.trim()} ${ch}:${vs}-${ve}`,
+  };
+}
+
+// 排序：書卷順序 → 章 → 起節
+function sortPassages(list) {
+  return list.sort((a, b) => {
+    if (a.bookOrder !== b.bookOrder) return a.bookOrder - b.bookOrder;
+    if (a.ch !== b.ch) return a.ch - b.ch;
+    return a.vs - b.vs;
+  });
+}
+
+// GitHub API 讀取資料夾清單
+async function fetchFileList() {
+  const url = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${GITHUB_FOLDER}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`無法讀取檔案清單（${res.status}）`);
+  const files = await res.json();
+  return files
+    .filter(f => f.name.endsWith('.txt'))
+    .map(f => ({ name: f.name, download_url: f.download_url }));
+}
+
+// GitHub 讀取單一 txt 內容
+async function fetchContent(downloadUrl) {
+  const res = await fetch(downloadUrl);
+  if (!res.ok) throw new Error('無法讀取檔案內容');
+  return await res.text();
+}
+
+// txt 解析：切割成各段落
+function parseText(raw) {
+  // 正規化換行
+  const text = raw.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
+  // 切割段落標記
+  const devotionMatch = text.match(/【.+?】.+?\n([\s\S]*?)(?=※|$)/);
+  const infoMatch = text.match(/※信息分享\n([\s\S]*?)(?=※|$)/);
+  const reflectMatch = text.match(/※個人的反思行動\n([\s\S]*?)$/);
+
+  // 靈修心得段落（以空行分段）
+  const devotionRaw = devotionMatch ? devotionMatch[1].trim() : '';
+  const devotionParas = devotionRaw
+    .split(/\n{2,}/)
+    .map(p => p.replace(/\n/g, '').trim())
+    .filter(p => p.length > 0);
+
+  // 信息分享段落
+  const infoRaw = infoMatch ? infoMatch[1].trim() : '';
+  const infoParas = infoRaw
+    .split(/\n{2,}/)
+    .map(p => p.replace(/\n/g, '').trim())
+    .filter(p => p.length > 0);
+
+  // 反思行動（以數字編號切割）
+  const reflectRaw = reflectMatch ? reflectMatch[1].trim() : '';
+  const reflectItems = reflectRaw
+    .split(/\n(?=\d+\.)/)
+    .map(p => p.replace(/^\d+\.\s*/, '').replace(/\n/g, '').trim())
+    .filter(p => p.length > 0);
+
+  return { devotionParas, infoParas, reflectItems };
+}
+
+// 渲染頁面
+function renderPage(meta, parsed) {
+  const { devotionParas, infoParas, reflectItems } = parsed;
+
+  let html = `
+    <div class="hero">
+      <div class="hero-series">${SERIES_LABEL}</div>
+      <div class="hero-passage">${meta.label}</div>
+    </div>`;
+
+  // 靈修心得
+  if (devotionParas.length > 0) {
+    html += `
+    <div class="card">
+      <div class="card-label">靈修心得</div>
+      <div class="card-body">
+        <div class="content">
+          ${devotionParas.map(p => `<p>${p}</p>`).join('\n          ')}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // 信息分享
+  if (infoParas.length > 0) {
+    html += `
+    <div class="card">
+      <div class="card-label">信息分享</div>
+      <div class="card-body">
+        <div class="content">
+          ${infoParas.map(p => `<p>${p}</p>`).join('\n          ')}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // 個人的反思行動
+  if (reflectItems.length > 0) {
+    const items = reflectItems.map((q, i) => `
+          <div class="q-item">
+            <div class="q-num">${i + 1}</div>
+            <div>${q}</div>
+          </div>`).join('');
+    html += `
+    <div class="card">
+      <div class="card-label">個人的反思行動</div>
+      <div class="card-body">
+        <div class="q-list">${items}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  html += `
+    <div class="footer">
+      基督教會花蓮靈糧堂<br>
+      ${SERIES_LABEL}
+    </div>`;
+
+  document.getElementById('mainContent').innerHTML = html;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// 載入指定篇章
+async function loadPassage(filename) {
+  if (!filename) return;
+  document.getElementById('mainContent').innerHTML = '<div class="loading">載入中…</div>';
+
+  try {
+    const fileInfo = window._fileMap[filename];
+    const raw = await fetchContent(fileInfo.download_url);
+    const meta = parseFilename(filename);
+    const parsed = parseText(raw);
+    renderPage(meta, parsed);
+  } catch (e) {
+    document.getElementById('mainContent').innerHTML =
+      `<div class="error">載入失敗，請稍後再試。<br><small>${e.message}</small></div>`;
+  }
+}
+
+// 初始化：讀取清單，建立選單，載入最新篇章
+async function init() {
+  try {
+    const files = await fetchFileList();
+    const parsed = files
+      .map(f => parseFilename(f.name))
+      .filter(Boolean);
+
+    const sorted = sortPassages(parsed);
+
+    // 建立 filename → download_url 對照表
+    window._fileMap = {};
+    files.forEach(f => { window._fileMap[f.name] = f; });
+
+    // 填入選單（最新在最後，預設選最後一篇）
+    const select = document.getElementById('passageSelect');
+    select.innerHTML = sorted.map((p, i) =>
+      `<option value="${p.filename}"${i === sorted.length - 1 ? ' selected' : ''}>${p.label}</option>`
+    ).join('');
+
+    // 載入最新篇章
+    const latest = sorted[sorted.length - 1];
+    await loadPassage(latest.filename);
+
+  } catch (e) {
+    document.getElementById('mainContent').innerHTML =
+      `<div class="error">無法載入靈修清單，請確認網路連線。<br><small>${e.message}</small></div>`;
+  }
+}
+
+function setFont(size) {
+  document.documentElement.style.setProperty('--fs', size + 'px');
+  ['fS','fM','fL','fXL'].forEach(id => document.getElementById(id).classList.remove('active'));
+  const map = { 14:'fS', 17:'fM', 20:'fL', 23:'fXL' };
+  if (map[size]) document.getElementById(map[size]).classList.add('active');
+}
+
+init();
+</script>
+</body>
+</html>
