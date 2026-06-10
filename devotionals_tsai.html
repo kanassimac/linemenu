@@ -54,6 +54,7 @@ body{font-family:'PingFang TC','Noto Sans TC','Microsoft JhengHei',sans-serif;fo
 .content{font-size:1em;line-height:1.9;color:var(--c-text);}
 .content p{margin-bottom:.9em;text-align:justify;}
 .content p:last-child{margin-bottom:0;}
+.content .list-item{padding-left:1.2em;text-indent:-1.2em;margin-bottom:.7em;}
 
 /* ── 反思問題 ── */
 .q-list{margin-top:0;}
@@ -158,6 +159,43 @@ async function fetchContent(downloadUrl) {
   return await res.text();
 }
 
+// 段落渲染：偵測項次標記，自動換行獨立顯示
+// 支援：⑴⑵⑶（全形圓圈）、(1)(2)(3)（半形括號）、（1）（2）（3）（全形括號）、1. 2. 3.（數字句號，段落開頭）
+function renderPara(text) {
+  // 項次標記的 regex（放在段落中間的情況）
+  // 在每個標記前插入換行符號，再切割
+  const MARKER = /([⑴⑵⑶⑷⑸⑹⑺⑻⑼⑽]|\(\d+\)|（\d+）)/g;
+
+  // 先檢查段落開頭是否為「數字句號」項次（如「1. xxx」）
+  // 這種情況整段就是一個項次，直接回傳 <p>
+  if (/^\d+\.\s/.test(text)) {
+    return `<p>${text}</p>`;
+  }
+
+  // 檢查段落內是否含有項次標記
+  if (!MARKER.test(text)) {
+    // 無項次標記，直接回傳一般段落
+    return `<p>${text}</p>`;
+  }
+
+  // 有項次標記：在每個標記前插入特殊分隔符，再切割
+  const SEP = '\u0000'; // 用 null 字元當分隔符
+  const split = text.replace(/([⑴⑵⑶⑷⑸⑹⑺⑻⑼⑽]|\(\d+\)|（\d+）)/g, `${SEP}$1`);
+  const parts = split.split(SEP).filter(p => p.trim().length > 0);
+
+  if (parts.length <= 1) {
+    return `<p>${text}</p>`;
+  }
+
+  // 第一段（項次前的引言文字）用 <p>，後續每個項次用 <p class="list-item">
+  return parts.map((part, i) => {
+    if (i === 0) {
+      return `<p>${part.trim()}</p>`;
+    }
+    return `<p class="list-item">${part.trim()}</p>`;
+  }).join('\n          ');
+}
+
 // txt 解析：切割成各段落
 function parseText(raw) {
   // 正規化換行
@@ -209,7 +247,7 @@ function renderPage(meta, parsed) {
       <div class="card-label">靈修心得</div>
       <div class="card-body">
         <div class="content">
-          ${devotionParas.map(p => `<p>${p}</p>`).join('\n          ')}
+          ${devotionParas.map(p => renderPara(p)).join('\n          ')}
         </div>
       </div>
     </div>`;
@@ -222,7 +260,7 @@ function renderPage(meta, parsed) {
       <div class="card-label">信息分享</div>
       <div class="card-body">
         <div class="content">
-          ${infoParas.map(p => `<p>${p}</p>`).join('\n          ')}
+          ${infoParas.map(p => renderPara(p)).join('\n          ')}
         </div>
       </div>
     </div>`;
