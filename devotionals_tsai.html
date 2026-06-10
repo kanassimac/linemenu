@@ -93,6 +93,7 @@ body{font-family:'PingFang TC','Noto Sans TC','Microsoft JhengHei',sans-serif;fo
 const GITHUB_USER = 'linemenu';
 const GITHUB_REPO = 'linemenu';
 const GITHUB_FOLDER = 'devotionals-tsai';
+const GITHUB_BRANCH = 'main';
 const SERIES_LABEL = '蔡俊杰牧師｜羅馬書靈修系列';
 // ─────────────────────────────────────────────────
 
@@ -134,13 +135,20 @@ function sortPassages(list) {
 
 // GitHub API 讀取資料夾清單
 async function fetchFileList() {
-  const url = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${GITHUB_FOLDER}`;
-  const res = await fetch(url);
+  const encodedFolder = encodeURIComponent(GITHUB_FOLDER);
+  const url = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${encodedFolder}?ref=${GITHUB_BRANCH}`;
+  const res = await fetch(url, {
+    headers: { 'Accept': 'application/vnd.github.v3+json' }
+  });
   if (!res.ok) throw new Error(`無法讀取檔案清單（${res.status}）`);
   const files = await res.json();
   return files
-    .filter(f => f.name.endsWith('.txt'))
-    .map(f => ({ name: f.name, download_url: f.download_url }));
+    .filter(f => f.type === 'file' && f.name.endsWith('.txt'))
+    .map(f => ({
+      name: f.name,
+      // 使用 raw content URL，避免中文檔名編碼問題
+      download_url: `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}/${GITHUB_FOLDER}/${encodeURIComponent(f.name)}`
+    }));
 }
 
 // GitHub 讀取單一 txt 內容
