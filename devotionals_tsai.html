@@ -30,8 +30,8 @@ body{font-family:'PingFang TC','Noto Sans TC','Microsoft JhengHei',sans-serif;fo
   background:rgba(255,255,255,.2);
   border:none;color:#FFFFFF;
   border-radius:6px;padding:5px 28px 5px 10px;
-  cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;
-  outline:none;max-width:150px;
+  cursor:pointer;font-family:inherit;font-size:1em;font-weight:700;
+  outline:none;max-width:180px;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='white' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
   background-repeat:no-repeat;background-position:right 8px center;
 }
@@ -324,13 +324,15 @@ async function init() {
     window._fileMap = {};
     files.forEach(f => { window._fileMap[f.name] = f; });
 
-    // 填入選單（最新在最後，預設選最後一篇）
+    // 填入選單：第一項為佔位文字，其後為所有篇章
     const select = document.getElementById('passageSelect');
-    select.innerHTML = sorted.map((p, i) =>
-      `<option value="${p.filename}"${i === sorted.length - 1 ? ' selected' : ''}>${p.label}</option>`
-    ).join('');
+    select.innerHTML =
+      `<option value="" disabled selected>選擇書卷章節</option>` +
+      sorted.map(p =>
+        `<option value="${p.filename}">${p.label}</option>`
+      ).join('');
 
-    // 載入最新篇章
+    // 載入最新篇章（不改變選單顯示，維持「選擇書卷章節」）
     const latest = sorted[sorted.length - 1];
     await loadPassage(latest.filename);
 
