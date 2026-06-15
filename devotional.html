@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>花蓮靈糧堂｜每日靈修</title>
+  <style>
+    :root {
+      --fs: 17px;
+      --c-primary: #6F9CC6;
+      --c-primary-light: #DEE2E9;
+      --c-accent: #4A7FA5;
+      --c-text: #2C2C2A;
+      --c-muted: #8EA2BE;
+      --c-border: #A4C4D8;
+      --c-bg: #F4F7FA;
+      --c-white: #FFFFFF;
+      --r: 12px;
+      --r-sm: 8px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'PingFang TC', 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+      font-size: var(--fs);
+      background: var(--c-bg);
+      color: var(--c-text);
+      line-height: 1.8;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      position: sticky; top: 0; z-index: 100;
+      background: #6F9CC6;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 14px; gap: 8px;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    .topbar-label { color: #fff; font-size: 12px; font-weight: 700; }
+    .tb-btn {
+      background: rgba(255,255,255,.2); border: none; color: #fff;
+      border-radius: 6px; padding: 5px 11px;
+      cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 700;
+      transition: background .15s; white-space: nowrap;
+    }
+    .tb-btn.active { background: rgba(255,255,255,.45); }
+    .tb-btn:active  { background: rgba(255,255,255,.6); }
+
+    /* ── 日期下拉選單 ── */
+    .passage-select {
+      appearance: none; -webkit-appearance: none;
+      background: rgba(255,255,255,.2);
+      border: none; color: #fff;
+      border-radius: 6px; padding: 5px 28px 5px 10px;
+      cursor: pointer; font-family: inherit; font-size: 1em; font-weight: 700;
+      outline: none; max-width: 180px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='white' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 8px center;
+    }
+    .passage-select option { background: #4A7FA5; color: #fff; }
+
+    /* ── HERO ── */
+    .hero {
+      background: linear-gradient(135deg, #4A7FA5 0%, #6F9CC6 50%, #8EA2BE 100%);
+      padding: 28px 20px 24px; text-align: center;
+      position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: ''; position: absolute; top: -30px; right: -30px;
+      width: 120px; height: 120px; background: rgba(255,255,255,.08); border-radius: 50%;
+    }
+    .hero::after {
+      content: ''; position: absolute; bottom: -20px; left: -20px;
+      width: 80px; height: 80px; background: rgba(255,255,255,.06); border-radius: 50%;
+    }
+    .hero-series  { font-size: 1em; color: rgba(255,255,255,.95); letter-spacing: .04em; margin-bottom: 6px; font-weight: 700; }
+    .hero-passage { font-size: 1em; font-weight: 400; color: rgba(255,255,255,.85); letter-spacing: .05em; }
+
+    /* ── CARDS ── */
+    .card { margin: 12px 10px 0; background: var(--c-white); border-radius: var(--r); border: 1px solid var(--c-border); overflow: hidden; }
+    .card:last-of-type { margin-bottom: 16px; }
+    .card-label { background: var(--c-primary); color: #fff; font-size: .85em; font-weight: 700; letter-spacing: .08em; padding: 7px 14px; text-align: center; }
+    .card-body  { padding: 16px; }
+
+    /* ── 內文 ── */
+    .content { font-size: 1em; line-height: 1.9; color: var(--c-text); }
+    .content p { margin-bottom: .9em; text-align: justify; }
+    .content p:last-child { margin-bottom: 0; }
+    /* 經文：行距縮小 */
+    .content.scripture { line-height: 1.55; }
+    .content.scripture p { margin-bottom: .5em; }
+
+    /* ── 反思問題（新格式「留給你的」用） ── */
+    .q-list { margin-top: 0; }
+    .q-item {
+      display: flex; gap: 10px; padding: 10px 0;
+      border-bottom: 1px dashed var(--c-border);
+      font-size: 1em; line-height: 1.75; color: var(--c-text); text-align: justify;
+    }
+    .q-item:last-child { border-bottom: none; }
+    .q-num {
+      flex-shrink: 0; width: 24px; height: 24px;
+      background: var(--c-primary); color: #fff; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .8em; font-weight: 700; margin-top: 2px;
+    }
+
+    /* ── FOOTER ── */
+    .footer { text-align: center; padding: 20px 16px; color: var(--c-muted); font-size: .85em; line-height: 1.8; margin-top: 4px; }
+
+    /* ── 狀態 ── */
+    .loading { text-align: center; padding: 60px 20px; color: var(--c-muted); font-size: 1em; }
+    .error   { text-align: center; padding: 40px 20px; color: #c0392b; font-size: .95em; line-height: 1.8; }
+  </style>
+</head>
+<body>
+
+<!-- ── Topbar ── -->
+<div class="topbar">
+  <div class="topbar-left">
+    <span class="topbar-label">字級</span>
+    <button class="tb-btn"        id="fS"  onclick="setFont(14)">小</button>
+    <button class="tb-btn active" id="fM"  onclick="setFont(17)">中</button>
+    <button class="tb-btn"        id="fL"  onclick="setFont(20)">大</button>
+    <button class="tb-btn"        id="fXL" onclick="setFont(23)">特大</button>
+  </div>
+  <select class="passage-select" id="datePicker" onchange="load(this.value)">
+    <option value="">載入中…</option>
+  </select>
+</div>
+
+<!-- ── 主內容 ── -->
+<div id="mainContent">
+  <div class="loading">載入靈修內容中…</div>
+</div>
+
+<script>
+  var GAS_URL = 'https://script.google.com/macros/s/AKfycby4Escc36efiMcLjHEl0visU84pYBsHNky4SI8pBJ2Y34og5wViIVT6IOY5mD0S5LXi/exec';
+
+  // ── 字級控制 ──────────────────────────────────────────
+  function setFont(size) {
+    document.documentElement.style.setProperty('--fs', size + 'px');
+    ['fS','fM','fL','fXL'].forEach(id => document.getElementById(id).classList.remove('active'));
+    var map = { 14:'fS', 17:'fM', 20:'fL', 23:'fXL' };
+    if (map[size]) document.getElementById(map[size]).classList.add('active');
+  }
+
+  // ── JSONP 載入 ────────────────────────────────────────
+  function load(d) {
+    document.getElementById('mainContent').innerHTML = '<div class="loading">載入中…</div>';
+    var old = document.getElementById('jsonp-script');
+    if (old) old.parentNode.removeChild(old);
+
+    window._gasCallback = function(res) {
+      // 初次載入：建立日期選單
+      var picker = document.getElementById('datePicker');
+      if (picker.options.length <= 1 && res.dateList && res.dateList.length > 0) {
+        picker.innerHTML = res.dateList.map(function(item) {
+          return '<option value="' + item.val + '"' + (item.val === res.currentDate ? ' selected' : '') + '>'
+            + item.label + '</option>';
+        }).join('');
+      }
+
+      if (res.error) {
+        document.getElementById('mainContent').innerHTML =
+          '<div class="error">讀取失敗：' + res.error + '</div>';
+        return;
+      }
+      if (!res.content) {
+        document.getElementById('mainContent').innerHTML =
+          '<div class="error">找不到當日靈修內容。</div>';
+        return;
+      }
+      renderPage(res);
+    };
+
+    var url = GAS_URL
+      + '?action=getData'
+      + (d ? '&date=' + encodeURIComponent(d) : '')
+      + '&callback=_gasCallback';
+    var script = document.createElement('script');
+    script.id = 'jsonp-script';
+    script.src = url;
+    script.onerror = function() {
+      document.getElementById('mainContent').innerHTML =
+        '<div class="error">讀取失敗，請重新整理。</div>';
+    };
+    document.head.appendChild(script);
+  }
+
+  // ── 渲染頁面 ─────────────────────────────────────────
+  function renderPage(res) {
+    var c = res.content;
+    var isNew = res.isNewFormat;
+
+    // Hero：系列名稱 + 標題
+    var seriesLabel = '每日靈修';
+    var html = '<div class="hero">'
+      + '<div class="hero-series">' + seriesLabel + '</div>'
+      + '<div class="hero-passage">' + escHtml(c.title || '') + '</div>'
+      + '</div>';
+
+    if (isNew) {
+      // ── 新格式（羅馬書）──
+      html += card('經文', scriptureContent(c.col3));
+      html += card('鑰句', textContent(c.col4));
+      html += card('拾穗', textContent(c.col6));
+      // 「留給你的」——若有編號問句，改用 q-list 樣式
+      if (c.col7) {
+        var qItems = parseQuestions(c.col7);
+        if (qItems.length > 1) {
+          html += '<div class="card"><div class="card-label">反思</div><div class="card-body"><div class="q-list">'
+            + qItems.map(function(q, i) {
+                return '<div class="q-item"><div class="q-num">' + (i+1) + '</div><div>' + escHtml(q) + '</div></div>';
+              }).join('')
+            + '</div></div></div>';
+        } else {
+          html += card('反思', textContent(c.col7));
+        }
+      }
+    } else {
+      // ── 舊格式（撒母耳記下）──
+      html += card('讀經',          scriptureContent(c.col3));
+      html += card('經文摘要',       textContent(c.col4));
+      html += card('認識神的屬性',   textContent(c.col5));
+      html += card('靈修分享',       sharingContent(c.col6));
+      html += card('禱告',           textContent(c.col7));
+    }
+
+    html += '<div class="footer">基督教會花蓮靈糧堂<br>' + seriesLabel + '</div>';
+    document.getElementById('mainContent').innerHTML = html;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ── 輔助：產生 card HTML ──────────────────────────────
+  function card(label, innerHtml) {
+    if (!innerHtml || innerHtml.trim() === '') return '';
+    return '<div class="card">'
+      + '<div class="card-label">' + label + '</div>'
+      + '<div class="card-body">' + innerHtml + '</div>'
+      + '</div>';
+  }
+
+  // 純文字 → <p> 段落
+  function textContent(text) {
+    if (!text) return '';
+    var paras = text.trim().split(/\n+/).filter(function(p){ return p.trim(); });
+    return '<div class="content">'
+      + paras.map(function(p){ return '<p>' + escHtml(p.trim()) + '</p>'; }).join('')
+      + '</div>';
+  }
+
+  // 經文專用：行距較緊
+  function scriptureContent(text) {
+    if (!text) return '';
+    var paras = text.trim().split(/\n+/).filter(function(p){ return p.trim(); });
+    return '<div class="content scripture">'
+      + paras.map(function(p){ return '<p>' + escHtml(p.trim()) + '</p>'; }).join('')
+      + '</div>';
+  }
+
+  // 靈修分享：處理 # 標題行
+  function sharingContent(text) {
+    if (!text) return '';
+    var lines = text.trim().split('\n');
+    var html = '<div class="content">';
+    lines.forEach(function(line) {
+      if (!line.trim()) return;
+      if (/^#/.test(line.trim())) {
+        html += '<p style="color:var(--c-accent);font-weight:700;text-align:center;letter-spacing:.04em;">'
+          + escHtml(line.trim()) + '</p>';
+      } else {
+        html += '<p>' + escHtml(line.trim()) + '</p>';
+      }
+    });
+    html += '</div>';
+    return html;
+  }
+
+  // 「留給你的」——嘗試拆分成問題清單
+  function parseQuestions(text) {
+    if (!text) return [];
+    // 以換行後的數字句號切割
+    var items = text.trim().split(/\n(?=\d+[\.、])/);
+    return items
+      .map(function(s){ return s.replace(/^\d+[\.、]\s*/, '').replace(/\n/g, '').trim(); })
+      .filter(function(s){ return s.length > 0; });
+  }
+
+  // HTML 跳脫
+  function escHtml(s) {
+    return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  window.onload = function() { load(null); };
+</script>
+</body>
+</html>
