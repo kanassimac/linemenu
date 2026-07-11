@@ -3,8 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>花蓮靈糧堂週報｜1089期</title>
+<title>花蓮靈糧堂週報｜1090期</title>
 <style>
+
 :root{
   --fs:17px;
   --c-primary:#6F9CC6;--c-primary-light:#DEE2E9;
@@ -15,7 +16,6 @@
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'PingFang TC','Noto Sans TC','Microsoft JhengHei',sans-serif;font-size:var(--fs);background:var(--c-bg);color:var(--c-text);line-height:1.8;-webkit-text-size-adjust:100%;}
-
 /* topbar */
 .topbar{position:sticky;top:0;z-index:100;background:#6F9CC6;display:flex;align-items:center;justify-content:space-between;padding:8px 14px;gap:8px;}
 .topbar-left{display:flex;align-items:center;gap:6px;flex-shrink:0;}
@@ -24,28 +24,23 @@ body{font-family:'PingFang TC','Noto Sans TC','Microsoft JhengHei',sans-serif;fo
 .tb-btn.active{background:rgba(255,255,255,.45);font-weight:700;}
 .tb-btn:active{background:rgba(255,255,255,.6);}
 .topbar-right{display:flex;align-items:center;gap:6px;flex-shrink:0;}
-
 /* header */
 .header{background:var(--c-primary);color:#FFFFFF;padding:20px 18px 18px;text-align:center;}
 .header-name{font-size:1.2em;font-weight:700;letter-spacing:.05em;color:#FFFFFF;}
 .header-issue{font-size:1em;color:#FFFFFF;margin-top:4px;}
-
 /* goal */
 .goal{background:var(--c-gold-light);border-left:4px solid var(--c-gold);padding:14px 16px;text-align:center;}
 .goal .g-label{font-size:1em;font-weight:700;color:#2C2C2A;margin-bottom:4px;text-align:center;}
 .goal .g-main{font-size:1em;font-weight:700;color:#2C2C2A;margin-bottom:4px;text-align:center;}
 .goal ol{list-style:none;padding:0;}
 .goal li{font-size:1em;color:#2C2C2A;margin-bottom:3px;font-weight:400;text-align:center;}
-
 /* vision */
 .vision{background:#fff;border-top:1px solid var(--c-border);border-bottom:1px solid var(--c-border);padding:12px 16px;text-align:center;}
 .vision .v-label{font-size:1em;font-weight:700;color:#2C2C2A;display:block;margin-bottom:4px;text-align:center;}
 .vision .v-main{font-size:1em;font-weight:700;color:#2C2C2A;line-height:1.6;text-align:center;}
 .vision .v-sub{font-size:1em;color:#2C2C2A;line-height:1.75;text-align:center;}
-
 /* section */
 .section{margin:10px 10px 0;background:var(--c-white);border-radius:var(--r);overflow:hidden;border:1px solid var(--c-border);}
-
 /* accordion */
 .acc-hd{display:flex;align-items:center;justify-content:space-between;padding:13px 15px;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;gap:10px;}
 .acc-hd:active{background:var(--c-bg);}
@@ -54,56 +49,47 @@ body{font-family:'PingFang TC','Noto Sans TC','Microsoft JhengHei',sans-serif;fo
 .acc-hd.open .acc-chev{transform:rotate(-135deg);margin-top:4px;}
 .acc-body{display:none;padding:0 15px 15px;border-top:1px solid var(--c-border);}
 .acc-body.open{display:block;}
-
 /* paragraph text */
 p,li{text-align:justify;}
-
 /* tables base */
 table{width:100%;border-collapse:collapse;margin-top:12px;font-size:1em;table-layout:fixed;}
 th{background:var(--c-primary-light);color:#2C2C2A;padding:8px 6px;font-weight:700;border:1px solid var(--c-border);text-align:center;vertical-align:middle;}
 td{padding:8px 6px;border:1px solid var(--c-border);vertical-align:middle;line-height:1.6;text-align:center;color:#2C2C2A;}
 tr:nth-child(even) td{background:#EEF2F6;}
 .td-left{text-align:left !important;}
-
 /* sub heading */
 .sub-hd{font-size:1em;font-weight:700;color:#2C2C2A;letter-spacing:.04em;margin:14px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--c-border);}
 .sub-hd:first-child{margin-top:12px;}
-
 /* sermon card */
 .sermon-card{background:var(--c-primary-light);border-radius:var(--r-sm);padding:14px;margin-top:12px;}
 .sermon-card .speaker{font-size:1em;color:#2C2C2A;margin-bottom:4px;}
 .sermon-card .title{font-size:1.2em;font-weight:700;color:#2C2C2A;}
 .sermon-card .ref{font-size:1em;color:#2C2C2A;margin-top:4px;}
-
 /* prayer */
 .prayer-cat{margin-top:14px;}
 .prayer-cat h3{font-size:1em;font-weight:700;color:#2C2C2A;letter-spacing:.04em;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--c-border);}
 .prayer-item{padding:10px 0;border-bottom:1px dashed var(--c-border);font-size:1em;line-height:1.75;color:#2C2C2A;}
 .prayer-item:last-child{border-bottom:none;}
-
 /* offering */
 .offering-total{margin-top:8px;background:var(--c-primary-light);border-radius:var(--r-sm);padding:10px 14px;display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:1em;}
 .offering-total .ol{color:#2C2C2A;font-weight:700;}
 .offering-total .ov{color:#2C2C2A;font-size:1.2em;font-weight:700;}
-
 /* devotional */
 .devot{margin-top:12px;font-size:1em;line-height:1.85;color:#2C2C2A;}
 .devot .book-title{display:block;text-align:center;font-weight:700;color:#2C2C2A;margin-bottom:10px;}
 .devot .sc{font-style:italic;color:#2C2C2A;font-weight:700;display:block;margin-bottom:10px;text-align:justify;}
 .devot p{margin-bottom:.85em;color:#2C2C2A;}
 .devot .author{text-align:right;color:#2C2C2A;font-size:1em;margin-top:4px;}
-
 /* discussion */
 .disc-wrap{margin-top:10px;}
 .disc-q{padding:4px 0 8px 1em;border-bottom:1px dashed var(--c-border);color:#2C2C2A;}
 .disc-q:last-of-type{border-bottom:none;}
-
 /* link */
 a{color:#2C2C2A;text-decoration:underline;}
+
 </style>
 </head>
 <body>
-
 <!-- Top bar -->
 <div class="topbar">
   <div class="topbar-left">
@@ -118,16 +104,14 @@ a{color:#2C2C2A;text-decoration:underline;}
     <button class="tb-btn" onclick="expandAll()">展開</button>
   </div>
 </div>
-
 <!-- Header -->
 <div class="header">
   <div class="header-name">基督教會花蓮靈糧堂</div>
-  <div class="header-issue">主後 2026 年 7 月 5 日　第 1089 期週報</div>
+  <div class="header-issue">主後 2026 年 7 月 12 日　第 1090 期週報</div>
 </div>
-
 <!-- 教會異象（固定） -->
 <div class="vision">
-  <p class="v-label">我們的異象</p>
+  <p class="v-label">【教會異象】</p>
   <p class="v-main">倚靠聖靈的大能和引導</p>
   <p class="v-main">創建在四方面榮耀神的健康教會</p>
   <p class="v-sub">盡力促進基督身體的合一</p>
@@ -135,10 +119,9 @@ a{color:#2C2C2A;text-decoration:underline;}
   <p class="v-sub">禱告敬拜恩膏化與國度化</p>
   <p class="v-sub">不斷拓展本地與海外宣教</p>
 </div>
-
 <!-- 年度目標（固定） -->
 <div class="goal">
-  <p class="g-label">2026 年年度目標</p>
+  <p class="g-label">【年度目標】</p>
   <p class="g-main">活出神兒女的尊榮</p>
   <ol>
     <li>擺對關係：修復與神和與神家人的關係</li>
@@ -146,7 +129,6 @@ a{color:#2C2C2A;text-decoration:underline;}
     <li>得地為業：透過傳福音作見證領人歸主</li>
   </ol>
 </div>
-
 <!-- ① 守望禱告 -->
 <div class="section">
   <div class="acc-hd" onclick="toggle(this)">
@@ -156,54 +138,74 @@ a{color:#2C2C2A;text-decoration:underline;}
   <div class="acc-body">
     <div class="prayer-cat">
       <h3>守望以色列</h3>
-      <div class="prayer-item"><p>為以黎和平禱告：以色列和黎巴嫩之間能結束軍事衝突禱告，求神在美國、以色列、伊朗和黎巴嫩的領袖層掌權，使隱藏在政治高層人士心中的個人謀算被廢除，使他們的心轉為尋求為該地區的長久和平與百姓的福祉，並化解戰事所帶來的仇恨。</p></div>
+      <div class="prayer-item"><p>為猶宣禱告：2023/10/07 哈瑪斯恐攻至今，全球反猶事件層出不窮，有的是穆斯林對猶太民族的仇視，也有對以色列政府回應行動的不滿，許多猶太人因此陷入恐懼與不安，求主藉此開啟福音之門，使宣教工人在陪伴猶太朋友的過程中分享主耶穌的盼望。</p></div>
       <div class="prayer-item"><p>為以色列歸主禱告：原訂 6/1-4 在死海地區舉辦號稱中東史上規模最大的同性戀驕傲月活動(Pride Land)，慶典可能在舊約所多瑪與蛾摩拉的附近舉行，因故延至 9 月，求神憐憫、赦免以色列的罪，主耶穌得勝在以色列百姓身上，驕傲不成，反要成為聖潔！</p></div>
     </div>
     <div class="prayer-cat">
       <h3>普世代求</h3>
-      <div class="prayer-item"><p>為委內瑞拉禱告：6/24 委內瑞拉發生百年最大的雙強震，房屋倒塌，死傷失蹤人數慘重，求主親自安慰失去親人、家園與財產的人，並賜力量給所有搜救隊員、醫護人員、志工與國際救援團隊，使用委內瑞拉各地教會，在這場災難中成為盼望與安慰的器皿。</p></div>
-      <div class="prayer-item"><p>為甘比亞穆宣禱告：穆斯林人數有九成以上，是西非宗教和睦國家之一，但少數激進伊瑪目仍會散播排斥基督徒言論，求主除去穆斯林歸主者的家庭及社會壓力，興起更多宣教工人與本地領袖建立穩固門徒訓練系統，肩負起開拓教會與非洲宣教的福音使命。</p></div>
+      <div class="prayer-item"><p>為摩洛哥禱告：99%的人口是穆斯林，"動搖穆斯林的信仰"是非法的，求主堅固摩洛哥穆斯林歸主者的信心，特別在保守鄉村地區，使他們靠著聖靈大能活出信仰，困境中仍勇敢傳福音，並為首都拉巴特打開福音大門，滿足教會對領袖培訓與成長的需求。</p></div>
+      <div class="prayer-item"><p>為烏克蘭禱告：求主保守烏克蘭眾教會，使牧者、宣教士與弟兄姊妹不因患難而灰心，賜給他們信心、愛心與謀略，使教會成為避難所、安慰者和福音見證，願許多因戰爭而心靈破碎的人，在基督裡領受主的慈愛與救恩，並繼續賜福基督教慈善宣教事工。</p></div>
     </div>
     <div class="prayer-cat">
       <h3>本地守望</h3>
-      <div class="prayer-item"><p>為拜偶像的罪禱告：我們為台灣這片土地的偶像崇拜、祭拜儀式、追逐神明遶境與迷信向神認同性認罪，求神憐憫台灣百姓，求主耶穌的寶血潔淨這地，斷開拜偶像所帶來的屬靈綑綁與咒詛，宣告台灣的掌權者與百姓都要脫離轄制，得著福音，歸向光明。</p></div>
-      <div class="prayer-item"><p>為慷慨文化禱告：求主祝福台灣的基督徒、企業家與經濟富足的人，賜給他們慷慨的心，使他們不單只是累積財富，也樂意分享資源，學習耶穌「施比受更為有福」的榜樣，透過公益基金、獎助學金、慈善計畫與急難救助等，使許多弱勢家庭因此得著幫助。</p></div>
+      <div class="prayer-item"><p>為無道德的罪禱告：為台灣面臨嚴重的倫理道德危機向神認罪，看見社會上充滿了謊言、詐騙、貪婪與自私，許多人看重利益過於誠信，家庭破碎、暴力不義，求主賜下悔改的心，赦免我們的罪，使誠實愛人、尊重生命的屬神價值觀成為台灣社會的核心。</p></div>
+      <div class="prayer-item"><p>為社會轉化禱告：禱告台灣未來能成為一個基督化國家，不是政教合一，而是基督徒在全國各地、各職場領域成為神國度的代理人，將神國度的祝福和聖經價值觀帶進台灣的社會文化中，政府依公義治理、教育部門追求真理、百姓與生意人依道德而運作。</p></div>
     </div>
     <div class="prayer-cat">
       <h3>教會代禱</h3>
       <div class="prayer-item"><p>為 8/31 第一期還款與財務供應禱告：求主恩待教會購地建堂的恩典之路。面對 8/31 向母堂無息借款的第一期還款，需如期償還新台幣三十二萬五千元，求主親自調度萬有，賜下豐富的財務供應。求主感動眾人看見神家的需要，以信心與奉獻一同承接，使還款計畫順利完成，在財務上顯明祢奇妙的信實與帶領。</p></div>
-      <div class="prayer-item"><p>為新秀的植堂事工禱告：求主點燃新秀家人的愛火，樂意委身、彼此相愛、同心同行；並醫治病痛、扶持軟弱、供應一切需要。願 7 月學青各營會與 8/1 青少籃球賽，生命興旺成長，興起新世代；恩膏每位同工，生命不斷更新，建造榮耀基督的身體！</p></div>
+      <div class="prayer-item"><p>為新秀的植堂事工禱告：求主續點燃新秀家人的愛火，樂意委身、彼此相愛、同心同行；並醫治病痛、幫助生活難當者。也求主動工 7 月學青各營會與 8/1 青少籃球賽，踴躍參與，生命經歷翻轉；恩膏每位同工，生命不斷更新，同建造基督榮耀的身體！</p></div>
     </div>
   </div>
 </div>
-
-<!-- ② 主日信息 -->
+<!-- ② 主日信息：雙講員版本（本堂／新秀） -->
 <div class="section">
   <div class="acc-hd" onclick="toggle(this)">
     <div class="acc-title">主日信息</div>
     <div class="acc-chev"></div>
   </div>
   <div class="acc-body">
+    <p class="sub-hd">本堂</p>
     <div class="sermon-card">
-      <div class="speaker">講員：蔡俊杰 牧師</div>
-      <div class="title">如何在差異中活出榮耀神？</div>
-      <div class="ref">經文：羅馬書 14:1-23</div>
+      <div class="speaker">講員：陽振君 牧師</div>
+      <div class="title">國，如何堅立？</div>
+      <div class="ref">經文：列王紀上 1-2 章</div>
     </div>
     <p class="sub-hd">信息要點</p>
     <ol style="padding-left:1.5em;line-height:2.1;">
-      <li>在主愛中彼此接納</li>
-      <li>凡事為主耶穌而活</li>
+      <li>權力更迭的兩條路</li>
+      <li>放不下的事，與臨終的交代</li>
+      <li>試探中的堅立，神掌權的顯明</li>
     </ol>
     <p class="sub-hd">小組討論</p>
     <div class="disc-wrap">
-      <p class="disc-q">當你看到別人的生活方式或信仰實踐與你不同（例如，比較保守或比較自由）時，你比較容易落入「論斷」還是「輕看」？你覺得可以怎樣實際操練，在真理與愛之間取得平衡，既不妥協信念，也不讓人跌倒？</p>
-      <p class="disc-q">我做這件事，是為了主，還是為了證明自己對？想一想：當我堅持某個信念或做法時，我是真的為了榮耀主，還是只是想證明自己比較成熟、比較自由、比較正統？如果將來我要為自己的態度和行為向神交帳，我現在需要調整什麼？</p>
+      <p class="disc-q">1. 你是否曾用「亞多尼雅的方式」（自我造勢、拉幫結派）去爭取你想要的位置或認可？</p>
+      <p class="disc-q">2. 你心裡是否有一件放了很久、卻還沒有處理的「舊帳」或未了的關係？</p>
     </div>
     <p class="sub-hd">行動方案</p>
-    <p style="margin-top:6px;">在教會生活中，面對與自己靈程不同、或性情與恩賜不同的肢體在互動時，操練放掉「我的習慣或想法」、或者「我屬靈成長的方式」、又或「我經歷神的方式」，當成「屬靈標準」或「唯一的模式或途徑」，進而學習彼此接納、相互尊重。</p>
+    <p style="margin-top:6px;">本週寫下一件心裡放了超過一年的未了之事，並決定第一步如何回應。</p>
+
+    <p class="sub-hd" style="margin-top:20px;">新秀</p>
+    <div class="sermon-card">
+      <div class="speaker">講員：鍾慧祺 傳道</div>
+      <div class="title">讓神的應許在我生命中「登基」</div>
+      <div class="ref">經文：列王記上 1:28-40</div>
+    </div>
+    <p class="sub-hd">信息要點</p>
+    <ol style="padding-left:1.5em;line-height:2.1;">
+      <li>願聽進提醒，受教對齊</li>
+      <li>願放手交託，勇敢行動</li>
+      <li>願應許成就，讓神坐王</li>
+    </ol>
+    <p class="sub-hd">小組討論</p>
+    <div class="disc-wrap">
+      <p class="disc-q">1. 當神透過身邊的人或環境提醒時，我們是急著辯解，還是願意安靜受教？透過信息，是否願意接受提醒或指正來對齊神的心意呢？試分享與代禱。</p>
+      <p class="disc-q">2. 當神要我們對某些關係、計畫或特定決定（如財務、人際關係、生涯規劃），我們是選擇繼續抓緊，還是勇敢交託？你也願意將生命的寶座與決定，讓神來坐嗎？試分享如何讓神來坐並代禱。</p>
+    </div>
+    <p class="sub-hd">行動方案</p>
+    <p style="margin-top:6px;">請思想這週會讓你有感到壓力，或生活遇到壓力的人事物時，在靈修時或安靜時，請先寫下並向主禱告宣告：「神，我願讓祢在這事上坐王，讓祢的應許成就，求祢賜智慧與引導，讓我再行動。奉主得勝的名求禱告，阿們！」</p>
   </div>
 </div>
-
 <!-- ③ 奉獻報告 -->
 <div class="section">
   <div class="acc-hd" onclick="toggle(this)">
@@ -211,20 +213,20 @@ a{color:#2C2C2A;text-decoration:underline;}
     <div class="acc-chev"></div>
   </div>
   <div class="acc-body">
-    <p style="color:#2C2C2A;margin-top:10px;">含支票、06/26～07/03 銀行轉帳</p>
+    <p style="color:#2C2C2A;margin-top:10px;">含支票、07/03～07/10 銀行轉帳</p>
     <table style="table-layout:fixed;">
       <colgroup><col style="width:15%;"><col style="width:35%;"><col style="width:20%;"><col style="width:30%;"></colgroup>
       <tbody>
-        <tr><td>十一奉獻</td><td style="text-align:right;">77,330</td><td>建堂奉獻</td><td style="text-align:right;"></td></tr>
-        <tr><td>主日奉獻</td><td style="text-align:right;">5,143</td><td>植堂奉獻</td><td style="text-align:right;">21,000</td></tr>
-        <tr><td>其他奉獻</td><td style="text-align:right;">2,000</td><td>慈惠奉獻</td><td style="text-align:right;"></td></tr>
-        <tr><td>代轉奉獻</td><td style="text-align:right;">11,700</td><td>感恩奉獻</td><td style="text-align:right;">110,712</td></tr>
-        <tr><td>宣教奉獻</td><td style="text-align:right;">1,000</td><td>宣教奉獻－緬甸</td><td style="text-align:right;"></td></tr>
+        <tr><td>十一奉獻</td><td style="text-align:right;">153,603</td><td>建堂奉獻</td><td style="text-align:right;">7,800</td></tr>
+        <tr><td>主日奉獻</td><td style="text-align:right;">4,150</td><td>植堂奉獻</td><td style="text-align:right;">122,000</td></tr>
+        <tr><td>其他奉獻</td><td style="text-align:right;">200</td><td>慈惠奉獻</td><td style="text-align:right;">1,000</td></tr>
+        <tr><td>代轉奉獻</td><td style="text-align:right;">10,000</td><td>感恩奉獻</td><td style="text-align:right;">501,100</td></tr>
+        <tr><td>宣教奉獻</td><td style="text-align:right;">1,000</td><td>宣教奉獻－緬甸</td><td style="text-align:right;">1,000</td></tr>
       </tbody>
     </table>
     <div class="offering-total">
       <span class="ol">主日奉獻總計</span>
-      <span class="ov">NT$ 228,885</span>
+      <span class="ov">NT$ 801,853</span>
     </div>
     <p class="sub-hd">奉獻袋上的說明</p>
     <table style="table-layout:fixed;">
@@ -259,7 +261,6 @@ a{color:#2C2C2A;text-decoration:underline;}
     </table>
   </div>
 </div>
-
 <!-- ④ 線上奉獻（固定） -->
 <div class="section">
   <div class="acc-hd" onclick="toggle(this)">
@@ -282,7 +283,6 @@ a{color:#2C2C2A;text-decoration:underline;}
     <p style="margin-top:12px;color:#2C2C2A;">代轉奉獻請勿使用線上奉獻。請使用現金奉獻袋或轉入教會玉山銀行帳戶，以確保款項全額轉交。</p>
   </div>
 </div>
-
 <!-- ⑤ 事工消息 -->
 <div class="section">
   <div class="acc-hd" onclick="toggle(this)">
@@ -294,13 +294,13 @@ a{color:#2C2C2A;text-decoration:underline;}
     <p style="margin-top:6px;">誠摯邀請已受洗並穩定委身花蓮靈糧堂主日與小組三個月以上的弟兄姊妹，加入歌手、鍵盤、吉他、貝斯、爵士鼓等音樂事奉，以及音控、攝影、字幕與多媒體製作的影音事奉行列，讓我們一同用神所賜的恩賜回應呼召，服事教會。請進入教會官方 LINE@ 報名。</p>
 
     <p class="sub-hd">2. 【兒童主日學】</p>
-    <p style="margin-top:6px;">8/24-27 兒童暑期營會今日開始報名，將升大班~升國一的孩子皆可參加，8/9 是報名截止日期。</p>
+    <p style="margin-top:6px;">8/24-27 兒童暑期營會已開始報名，升大班～升國一的孩子皆可參加，8/9 是報名截止日期。</p>
 
     <p class="sub-hd">3. 新秀【新秀暑期系列活動｜新秀青少籃球賽】</p>
-    <p style="margin-top:6px;">時間：8/1(六)下午 4-6，地點：新城公園籃球場，對象：家長、青少、兒主，開放報名：7/5 起，熱血、團隊、歡笑一籮筐，營造充滿回憶的夏天！</p>
+    <p style="margin-top:6px;">時間：8/1(六)下午 4-6，地點：新城公園籃球場，對象：家長、青少、兒主，報名：7/5 起，請掃描 QR 碼或洽葉佩雯姊妹，熱血、團隊、歡笑一籮筐，營造充滿回憶的夏天！</p>
 
     <p class="sub-hd">4. 新秀【新秀兒主-主日接送司機 招募中！】</p>
-    <p style="margin-top:6px;">邀請本會「穩定主日聚會滿 3 個月、具合法駕照、能駕駛福音車、愛孩子且有負擔的你」加入接送服事，陪伴孩子走進神的家，走入愛與盼望，聯絡請洽兒主老師葉佩雯姐妹！</p>
+    <p style="margin-top:6px;">邀請本會「穩定主日聚會滿 3 個月、具合法駕照、能駕駛福音車、愛孩子且有負擔的你」加入接送服事，陪伴孩子走進神的家，走入愛與盼望，聯絡請洽兒主老師 葉佩雯姊妹！</p>
 
     <!-- 靈糧午餐固定格式 -->
     <p class="sub-hd">5. 本堂【靈糧午餐】</p>
@@ -311,7 +311,6 @@ a{color:#2C2C2A;text-decoration:underline;}
     </div>
   </div>
 </div>
-
 <!-- ⑥ 靈修進度 -->
 <div class="section">
   <div class="acc-hd" onclick="toggle(this)">
@@ -325,18 +324,17 @@ a{color:#2C2C2A;text-decoration:underline;}
         <tr><th>日期</th><th>靈修進度</th><th>速讀進度</th></tr>
       </thead>
       <tbody>
-        <tr><td>7/5 週日</td><td class="td-left">羅馬書 14:1-12</td><td class="td-left">民數記 17-21</td></tr>
-        <tr><td>7/6 週一</td><td class="td-left">羅馬書 14:13-23</td><td class="td-left">民數記 22-26</td></tr>
-        <tr><td>7/7 週二</td><td class="td-left">羅馬書 15:1-6</td><td class="td-left">民數記 27-31</td></tr>
-        <tr><td>7/8 週三</td><td class="td-left">羅馬書 15:7-13</td><td class="td-left">民數記 32-36</td></tr>
-        <tr><td>7/9 週四</td><td class="td-left">羅馬書 15:14-21</td><td class="td-left">申命記 1-5</td></tr>
-        <tr><td>7/10 週五</td><td class="td-left">羅馬書 15:22-33</td><td class="td-left">申命記 6-10</td></tr>
-        <tr><td>7/11 週六</td><td class="td-left">羅馬書 16:1-5</td><td class="td-left">申命記 11-15</td></tr>
+        <tr><td>7/12 週日</td><td class="td-left">羅馬書 16:6-16</td><td class="td-left">申命記 16-20</td></tr>
+        <tr><td>7/13 週一</td><td class="td-left">羅馬書 16:17-20</td><td class="td-left">申命記 21-25</td></tr>
+        <tr><td>7/14 週二</td><td class="td-left">羅馬書 16:21-27</td><td class="td-left">申命記 26-30</td></tr>
+        <tr><td>7/15 週三</td><td class="td-left">列王紀上 1:1-27</td><td class="td-left">申命記 31-34、約書亞記 1</td></tr>
+        <tr><td>7/16 週四</td><td class="td-left">列王紀上 1:28-53</td><td class="td-left">約書亞記 2-6</td></tr>
+        <tr><td>7/17 週五</td><td class="td-left">列王紀上 2:1-12</td><td class="td-left">約書亞記 7-11</td></tr>
+        <tr><td>7/18 週六</td><td class="td-left">列王紀上 2:13-46</td><td class="td-left">約書亞記 12-16</td></tr>
       </tbody>
     </table>
   </div>
 </div>
-
 <!-- ⑦ 靈修小品 -->
 <div class="section">
   <div class="acc-hd" onclick="toggle(this)">
@@ -346,13 +344,17 @@ a{color:#2C2C2A;text-decoration:underline;}
   <div class="acc-body">
     <div class="devot">
       <span class="book-title">《荒漠甘泉》</span>
-      <span class="sc">……我必勸導他，領他到曠野，對他說安慰的話。從那裡我必賜他葡萄園，又賜他亞割谷作為指望的門，他必在那裡歌唱，與幼年的日子一樣。（何二 14~15，直譯）</span>
-      <p>在甚麼地方找到「葡萄園」？在「曠野」裡！眞奇怪，在一個連出路也難找的「曠野」裡找到「葡萄園」！讀者，這給我們看見：我們屬靈的豐富能在「曠野」裡──寂靜的地方──找到。不但能找到「葡萄園」，也能找到「亞割谷（亞割意即苦難）作為指望的門」。「他必在那裡歌唱，與幼年的日子一樣！」</p>
-      <p>是的，上帝知道我們需要曠野的經歷。祂知到在甚麼地方能生出忍耐來，祂也知道怎樣能生出忍耐來。我們的心是叛逆的，善於崇拜偶像的，最會忘記上帝，也最會固執地說：「我要隨從我所愛的。」（何二 5，直譯）到我們絕了望被人棄絕的時候，上帝卻說：「我必勸導他，領他到曠野，對他說安慰的話。」啊，我們的上帝是一個愛的上帝啊！──碎錦（Crumbs）</p>
+      <span class="sc">然而祂知道我所行的路，祂試煉我之後，我必如精金。（伯廿三 10）</span>
+      <p>「風雨生信心」──這不是很簡單的五個字？但是這五個字對於在風雨中的人是多麼有意味啊！</p>
+      <p>信心是上帝所賜的，信心經過試煉之後，能行種種神奇的事──不可見的，能變成可見；不可能的，能變成可能。</p>
+      <p>「風雨生信心」就是說，當我們在靈界上遭到困難的時候，我們的信心會得著長進。</p>
+      <p>最堅實的樹木並不是生長在森林的庇護下的，乃是暴露在風雨打擊得到的空曠之處；它們因著風雨的擊打、搖動，竟長得極其高大──工匠用來製作器具車輛的，就是這種木料。</p>
+      <p>所以你應當常常記得你所當行的路，不是陽光閃爍，野花開放的那條，卻是一條嶮阻狹窄的小路，在那裡陰間的狂風險些會將你吹倒，尖銳的石子會割破你的皮肉，突出的荊棘會抓傷你的額頭，惡毒的野獸會在你四面吼叫。</p>
+      <p>這是一條又悲傷又歡樂的道路，有痛苦，也有醫治；有眼淚，也有眷顧；有試煉，也有勝利；有戰爭，也有凱旋。路上時常遇到困難、危險、拳打、掌擊、逼迫、誤會、煩惱、苦楚，然而靠著愛我們的主，在這一切的事上已經得勝有餘了。</p>
+      <p>在風雨最猛烈的當兒，也許你會退縮….但是你只管前進，上帝要在你試煉的中心與你會面。祂要將祂的奧秘告訴你，使你走出來的時候，臉上帶著「精金」一般的光彩，心中帶著堅定不屈的信心，甚至陰間裡的鬼魔再也不能搖動你。──吉博文（F. A. Kilbourne）</p>
     </div>
   </div>
 </div>
-
 <!-- ⑧ 聚會資訊 -->
 <div class="section">
   <div class="acc-hd" onclick="toggle(this)">
@@ -370,42 +372,39 @@ a{color:#2C2C2A;text-decoration:underline;}
         <tr><td>主日崇拜</td><td class="td-left">週日早上 10:30（會前禱告 10:15）</td></tr>
         <tr><td>兒童主日</td><td class="td-left">週日早上 10:30</td></tr>
         <tr><td>裝備訓練</td><td class="td-left">週六上午</td></tr>
-        <tr><td>宣教禱告會</td><td class="td-left">07/07（二）晚上 7:30-9:00</td></tr>
+        <tr><td>宣教禱告會</td><td class="td-left">07/07（二）晚上 7:30–9:00</td></tr>
         <tr><td>同工月會</td><td class="td-left">07/19（日）下午 2:00 起</td></tr>
-        <tr><td>教會禱告會</td><td class="td-left">07/21（二）晚上 7:30-9:00</td></tr>
+        <tr><td>教會禱告會</td><td class="td-left">07/21（二）晚上 7:30–9:00</td></tr>
       </tbody>
     </table>
-
     <p class="sub-hd">主日講員</p>
     <table style="table-layout:fixed;">
       <thead>
-        <tr><th style="width:15%;">地點／日期</th><th style="width:21.25%;">7/12</th><th style="width:21.25%;">7/19</th><th style="width:21.25%;">7/26</th><th style="width:21.25%;">8/2</th></tr>
+        <tr><th style="width:15%;">地點／日期</th><th style="width:21.25%;">7/19</th><th style="width:21.25%;">7/26</th><th style="width:21.25%;">8/2</th><th style="width:21.25%;">8/9</th></tr>
       </thead>
       <tbody>
-        <tr><td>本堂</td><td>陽振君 牧師</td><td>蔡俊杰 牧師</td><td>鍾慧祺 傳道</td><td>張莫 牧師</td></tr>
-        <tr><td>新秀</td><td>鍾慧祺 傳道</td><td>直播</td><td>陽振君 牧師</td><td>直播</td></tr>
+        <tr><td>本堂</td><td>蔡俊杰 牧師</td><td>鍾慧祺 傳道</td><td>張莫 牧師</td><td>蔡俊杰 牧師</td></tr>
+        <tr><td>新秀</td><td>直播</td><td>陽振君 牧師</td><td>直播</td><td>直播</td></tr>
       </tbody>
     </table>
-
     <p class="sub-hd">服事人員</p>
     <table style="table-layout:fixed;">
       <colgroup><col style="width:15%;"><col style="width:21.25%;"><col style="width:21.25%;"><col style="width:21.25%;"><col style="width:21.25%;"></colgroup>
       <thead>
         <tr><th rowspan="2">服事人員</th><th colspan="2">本堂</th><th colspan="2">新秀</th></tr>
-        <tr><th>7/5</th><th>7/12</th><th>7/5</th><th>7/12</th></tr>
+        <tr><th>7/12</th><th>7/19</th><th>7/12</th><th>7/19</th></tr>
       </thead>
       <tbody>
-        <tr><td>招待</td><td>社青小組</td><td>嗎哪小組</td><td>李芝吟、林春嬌</td><td>王貴芳、黃志強</td></tr>
-        <tr><td>攝影直播</td><td>黎雅文</td><td>蔡林柏森</td><td></td><td></td></tr>
-        <tr><td>音控</td><td>温聖民</td><td>鄧文豪</td><td>鄧文豪</td><td>林志祥</td></tr>
-        <tr><td>字幕</td><td>陳紫榕</td><td>林感恩</td><td>謝雅玲</td><td>王馨怡</td></tr>
-        <tr><td>敬拜主領</td><td>陽振君</td><td>劉瑞華</td><td>申婷婷</td><td>申秀雯</td></tr>
-        <tr><td>敬拜歌手</td><td>曾麒恩</td><td>魯怡雯</td><td>曹金花</td><td>黎雅文</td></tr>
-        <tr><td>司琴</td><td>趙郡頡</td><td>黃欣慈</td><td>朱瑜琪</td><td>趙郡頡</td></tr>
-        <tr><td>司鼓／吉他</td><td>林庭軒</td><td>林庭軒</td><td></td><td></td></tr>
+        <tr><td>招待</td><td>嗎哪小組</td><td>標竿+得力小組</td><td>王貴芳、黃志強</td><td>金阿菊、林春嬌</td></tr>
+        <tr><td>攝影直播</td><td>蔡林柏森</td><td>黎雅文</td><td></td><td></td></tr>
+        <tr><td>音控</td><td>鄧文豪</td><td>鄧文豪</td><td>林志祥</td><td>劉文財</td></tr>
+        <tr><td>字幕</td><td>林感恩</td><td>陳紫榕</td><td>王馨怡</td><td>謝雅玲</td></tr>
+        <tr><td>敬拜主領</td><td>劉瑞華</td><td>馬耀卡兆</td><td>申秀雯</td><td>鍾慧祺</td></tr>
+        <tr><td>敬拜歌手</td><td>魯怡雯</td><td>以幸安妮</td><td>黎雅文</td><td>曹金花</td></tr>
+        <tr><td>司琴</td><td>黃欣慈</td><td>趙郡頡</td><td>趙郡頡</td><td>黃欣慈</td></tr>
+        <tr><td>司鼓／吉他</td><td>林庭軒</td><td>曾麒恩/王勤孜</td><td></td><td></td></tr>
       </tbody>
     </table>
-
     <p class="sub-hd">上週聚會報告</p>
     <table style="table-layout:fixed;">
       <colgroup><col style="width:15%;"><col style="width:42.5%;"><col style="width:42.5%;"></colgroup>
@@ -413,16 +412,15 @@ a{color:#2C2C2A;text-decoration:underline;}
         <tr><th>聚會／地點</th><th>本堂</th><th>新秀</th></tr>
       </thead>
       <tbody>
-        <tr><td>主日崇拜</td><td>94 人</td><td>35 人</td></tr>
-        <tr><td>兒童主日</td><td>25 人</td><td>13 人</td></tr>
-        <tr><td>視訊崇拜</td><td>19 人</td><td>5 人</td></tr>
-        <tr><td>成人小組</td><td>9 組 68 人</td><td>1 組 11 人</td></tr>
-        <tr><td>學生小組</td><td>6 人</td><td>4 人</td></tr>
-        <tr><td>禱告會</td><td></td><td></td></tr>
+        <tr><td>主日崇拜</td><td>106 人</td><td>38 人</td></tr>
+        <tr><td>兒童主日</td><td>22 人</td><td>14 人</td></tr>
+        <tr><td>視訊崇拜</td><td>21 人</td><td>4 人</td></tr>
+        <tr><td>成人小組</td><td>6 組人 51 人</td><td>1 組 8 人</td></tr>
+        <tr><td>學生小組</td><td>14 人</td><td>7 人</td></tr>
+        <tr><td>禱告會</td><td>18 人</td><td></td></tr>
         <tr><td>裝備課程</td><td></td><td></td></tr>
       </tbody>
     </table>
-
     <p class="sub-hd">本堂小組聚會資訊</p>
     <table style="table-layout:fixed;">
       <colgroup><col style="width:15%;"><col style="width:28.3333%;"><col style="width:28.3333%;"><col style="width:28.3333%;"></colgroup>
@@ -436,7 +434,6 @@ a{color:#2C2C2A;text-decoration:underline;}
         <tr><td>標竿親子</td><td>一、三週週五 19:30</td><td>學生</td><td>每週六 17:00</td></tr>
       </tbody>
     </table>
-
     <p class="sub-hd">新秀小組聚會資訊</p>
     <table style="table-layout:fixed;">
       <colgroup><col style="width:15%;"><col style="width:28.3333%;"><col style="width:28.3333%;"><col style="width:28.3333%;"></colgroup>
@@ -447,7 +444,6 @@ a{color:#2C2C2A;text-decoration:underline;}
     </table>
   </div>
 </div>
-
 <!-- ⑨ 教會立場（固定） -->
 <div class="section">
   <div class="acc-hd" onclick="toggle(this)">
@@ -468,7 +464,6 @@ a{color:#2C2C2A;text-decoration:underline;}
     </table>
   </div>
 </div>
-
 <!-- ⑩ 堂點資訊（固定） -->
 <div class="section" style="margin-bottom:10px;">
   <div class="acc-hd" onclick="toggle(this)">
@@ -490,8 +485,8 @@ a{color:#2C2C2A;text-decoration:underline;}
     </table>
   </div>
 </div>
-
 <script>
+
 function toggle(hd){
   hd.classList.toggle('open');
   hd.nextElementSibling.classList.toggle('open');
@@ -515,6 +510,7 @@ function setFont(sz){
     document.getElementById(id).classList.toggle('active',s===sz);
   });
 }
+
 </script>
 </body>
 </html>
