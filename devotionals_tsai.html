@@ -166,6 +166,34 @@ async function fetchContent(downloadUrl) {
   if (!res.ok) throw new Error('無法讀取檔案內容');
   return await res.text();
 }
+// 依 GitHub commit 紀錄，找出「最近一次被建立／更新」的檔名（= 目前實際的靈修進度）
+// 而非依正典書卷順序判斷，因為讀經計畫可能跳著讀（如：羅馬書→列王紀→哥林多書）
+async function fetchLatestFilename(existingFilenames) {
+  const encodedFolder = encodeURIComponent(GITHUB_FOLDER);
+  const url = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/commits?path=${encodedFolder}&per_page=10`;
+  const res = await fetch(url, { headers: { 'Accept': 'application/vnd.github.v3+json' } });
+  if (!res.ok) return null;
+  const commits = await res.json();
+  for (const c of commits) {
+    const msg = (c.commit && c.commit.message) || '';
+    // 先嘗試直接從 commit 訊息解析檔名（適用逐一「Create/Update ○○.txt」的情況）
+    const m = msg.match(/([^\s\/\\]+\.txt)/i);
+    if (m && existingFilenames.has(m[1])) {
+      return m[1];
+    }
+    // 訊息無法解析（例如批次「Add files via upload」），改查該次提交實際變動的檔案清單
+    try {
+      const detailRes = await fetch(c.url, { headers: { 'Accept': 'application/vnd.github.v3+json' } });
+      if (!detailRes.ok) continue;
+      const detail = await detailRes.json();
+      const touched = (detail.files || [])
+        .map(f => f.filename.split('/').pop())
+        .filter(name => name.endsWith('.txt') && existingFilenames.has(name));
+      if (touched.length > 0) return touched.sort().reverse()[0];
+    } catch (e) { /* 忽略單筆查詢錯誤，繼續往下一筆提交查找 */ }
+  }
+  return null;
+}
 // 段落渲染：偵測項次標記，自動換行獨立顯示
 function renderPara(text) {
   const MARKER = /([⑴⑵⑶⑷⑸⑹⑺⑻⑼⑽]|\(\d+\)|（\d+）)/g;
@@ -294,9 +322,19 @@ async function init() {
     select.innerHTML = sorted.map(p =>
       `<option value="${p.filename}">${p.label}</option>`
     ).join('');
+    // 預設頁面：以 GitHub commit 時間判斷「最近上傳」的檔案 = 目前實際靈修進度
+    // 保底邏輯：若查詢失敗（例如 API 額度用盡），退回原本「排序末項」的作法
+    let latest = sorted[sorted.length - 1];
+    try {
+      const existingFilenames = new Set(files.map(f => f.name));
+      const latestFilename = await fetchLatestFilename(existingFilenames);
+      if (latestFilename) {
+        const found = parsed.find(p => p.filename === latestFilename);
+        if (found) latest = found;
+      }
+    } catch (e) { /* 安靜退回保底邏輯，不中斷頁面載入 */ }
     // 將 select 的 value 設為最新篇章，讓下拉選單點開時自動捲動到此位置
     // （顯示文字固定為「選擇書卷章節」，不受此影響）
-    const latest = sorted[sorted.length - 1];
     select.value = latest.filename;
     await loadPassage(latest.filename);
   } catch (e) {
