@@ -1,0 +1,470 @@
+<!doctype html>
+<html>
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<style>
+  /* 配色與電子週報、報名頁一致 */
+  :root {
+    --primary: #6F9CC6; --primary-light: #DEE2E9; --muted: #8EA2BE;
+    --ink: #2C2C2A; --soft: #6B7A8F; --line: #A4C4D8; --bg: #F4F7FA; --stripe: #EEF2F6;
+    --danger: #B5574B; --ok: #3F7AAE;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; color: var(--ink); background: var(--bg); font: 14px/1.7 "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif; }
+
+  /* 頂部分頁列：主色底、半透明白色按鈕，同週報頂部列 */
+  .tabs { display: flex; gap: 6px; padding: 10px 14px; background: var(--primary); position: sticky; top: 0; z-index: 2; }
+  .tab { border: 0; background: rgba(255,255,255,.2); color: #fff; padding: 6px 14px; border-radius: 6px; font: inherit; font-weight: 700; cursor: pointer; }
+  .tab.active { background: rgba(255,255,255,.45); }
+  .tab:active { background: rgba(255,255,255,.6); }
+
+  .view { padding: 14px; }
+  h3 { margin: -14px -14px 12px; padding: 10px 14px; font-size: 16px; text-align: center; border-bottom: 1px solid var(--line); }
+  .grid { display: grid; grid-template-columns: 280px 1fr; gap: 14px; align-items: start; }
+  .panel { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+  .list { max-height: 590px; overflow-y: auto; }
+  .item { padding: 10px; border-radius: 8px; cursor: pointer; border: 1px solid transparent; margin-bottom: 6px; }
+  .item:hover { background: var(--stripe); }
+  .item.sel { border-color: var(--primary); background: var(--primary-light); }
+  .item b { display: block; }
+  .item small { color: var(--soft); }
+  .chip { display: inline-block; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 700; margin-right: 4px; }
+  .chip.ok { background: var(--primary); color: #fff; }
+  .chip.off { background: var(--primary-light); color: var(--muted); }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  label { display: block; font-weight: 700; margin-bottom: 10px; }
+  label small, .hint { font-weight: 400; color: var(--soft); }
+  input, select, textarea { display: block; width: 100%; margin-top: 3px; padding: 7px 9px; font: inherit; font-weight: 400; color: var(--ink); border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+  input:focus, select:focus, textarea:focus { outline: 2px solid var(--primary); outline-offset: 0; }
+  input:disabled { background: var(--stripe); color: var(--soft); }
+  textarea { min-height: 70px; resize: vertical; }
+  input[type=checkbox] { display: inline-block; width: auto; margin: 0 6px 0 0; vertical-align: -2px; accent-color: var(--primary); }
+  .check { font-weight: 700; }
+  button.btn { border: 1px solid transparent; border-radius: 10px; padding: 8px 18px; font: inherit; font-weight: 700; letter-spacing: .04em; cursor: pointer; }
+  .btn.primary { background: var(--primary); color: #fff; }
+  .btn.primary:disabled { background: var(--primary-light); color: var(--muted); cursor: default; }
+  .btn.ghost { background: #fff; border-color: var(--line); color: var(--ink); }
+  .btn.danger { background: var(--danger); color: #fff; }
+  .btn.small { padding: 4px 10px; letter-spacing: 0; }
+  .btn.block { width: 100%; }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px; }
+  .cover { display: grid; grid-template-columns: 240px 1fr; gap: 12px; align-items: center; margin-bottom: 12px; }
+  .cover-box { aspect-ratio: 16 / 9; border-radius: 8px; border: 1px dashed var(--line); background: var(--primary-light) center / cover no-repeat; display: grid; place-items: center; color: var(--muted); font-size: 13px; }
+  .fieldrow { display: grid; grid-template-columns: 150px 1fr auto; gap: 8px; margin-bottom: 6px; }
+  .fieldrow input { margin: 0; }
+  .person { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; margin-bottom: 6px; }
+  .person input, .person select { margin: 0; }
+  .box { background: var(--primary-light); border-radius: 8px; padding: 10px 12px; margin: 8px 0 12px; }
+  .box:empty { display: none; }
+  .msg { min-height: 22px; margin-top: 8px; font-weight: 700; }
+  .msg.err { color: var(--danger); }
+  .msg.ok { color: var(--ok); }
+  .narrow { max-width: 620px; }
+  fieldset { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin: 0 0 12px; }
+  legend { font-weight: 700; padding: 0 4px; }
+</style>
+</head>
+<body>
+  <nav class="tabs">
+    <button class="tab" data-tab="events">活動管理</button>
+    <button class="tab" data-tab="manual">補登報名</button>
+    <button class="tab" data-tab="broadcast">發送通知</button>
+    <button class="tab" data-tab="roster">統計與點名表</button>
+  </nav>
+
+  <!-- 1. 活動管理 -->
+  <section class="view" id="v-events" hidden>
+    <div class="grid">
+      <div class="panel">
+        <button class="btn primary block" id="btn-new">新增活動</button>
+        <div class="list" id="event-list" style="margin-top:10px"></div>
+      </div>
+      <div class="panel" id="form-panel">
+        <h3 id="form-title">新增活動</h3>
+
+        <div class="cover">
+          <div class="cover-box" id="cover-box">尚未上傳</div>
+          <div>
+            <div style="font-weight:600">封面圖片 <small class="hint">建議橫式，系統會自動裁成 16:9 並壓縮</small></div>
+            <div class="actions" style="justify-content:flex-start">
+              <button class="btn ghost small" id="btn-pick">選擇圖片</button>
+              <button class="btn ghost small" id="btn-clear-img">移除圖片</button>
+            </div>
+            <input type="file" id="file" accept="image/*" hidden>
+            <div class="hint" id="img-status"></div>
+          </div>
+        </div>
+
+        <div class="row2">
+          <label>活動代碼 <small>英數字，建立後不可修改</small><input id="f-id" maxlength="20" placeholder="例如 GCMA2611"></label>
+          <label>活動名稱<input id="f-name" maxlength="60" placeholder="例如 GCMA 第三屆宣教特會"></label>
+        </div>
+        <div class="row2">
+          <label>活動日期與開始時間<input id="f-date" type="datetime-local"></label>
+          <label>時間地點<input id="f-place" maxlength="100" placeholder="例如 19:30 花蓮靈糧堂 4 樓大堂"></label>
+        </div>
+        <div class="row2">
+          <label>報名截止 <small>留空代表不限</small><input id="f-deadline" type="datetime-local"></label>
+          <label>名額 <small>留空代表不限</small><input id="f-cap" type="number" min="1" step="1"></label>
+        </div>
+        <label class="check"><input type="checkbox" id="f-open">開放報名（取消勾選後，報名頁不會顯示此活動）</label>
+        <label>說明 <small>顯示在報名頁</small><textarea id="f-desc" maxlength="1000"></textarea></label>
+
+        <fieldset>
+          <legend>額外欄位</legend>
+          <div class="hint" style="margin-bottom:6px">例如住宿、交通。選項以頓號分隔會變成下拉選單；選項留空則是文字欄位。</div>
+          <div id="fields"></div>
+          <button class="btn ghost small" id="btn-add-field">新增欄位</button>
+        </fieldset>
+
+        <fieldset>
+          <legend>自動提醒</legend>
+          <label>提醒時間 <small>留空代表不發送</small><input id="f-remind-at" type="datetime-local"></label>
+          <label>提醒訊息 <small>純文字，{names} 會換成參加者姓名</small><textarea id="f-remind-text" style="min-height:110px"></textarea></label>
+          <div class="hint" id="reminded"></div>
+          <label class="check" id="reset-wrap" hidden><input type="checkbox" id="f-reset">清除發送紀錄，到提醒時間後重新發送</label>
+        </fieldset>
+
+        <div class="actions"><button class="btn primary" id="btn-save">儲存活動</button></div>
+        <div class="msg" id="msg-events"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. 補登報名 -->
+  <section class="view narrow" id="v-manual" hidden>
+    <div class="panel">
+      <h3>補登報名</h3>
+      <p class="hint">替沒有 LINE 的會友登記。補登不會發送 LINE 通知，但會計入名額與點名表。</p>
+      <label>活動<select class="event-select" id="m-event"></select></label>
+      <div class="box hint" id="m-info"></div>
+      <div id="m-people"></div>
+      <button class="btn ghost small" id="m-add">新增一位</button>
+      <label style="margin-top:12px">備註 <small>選填，例如「由申婷婷代為報名」</small><input id="m-note" maxlength="200"></label>
+      <label class="check"><input type="checkbox" id="m-over">名額已滿時仍然登記</label>
+      <div class="actions"><button class="btn primary" id="m-submit">確認補登</button></div>
+      <div class="msg" id="msg-manual"></div>
+    </div>
+  </section>
+
+  <!-- 3. 發送通知 -->
+  <section class="view narrow" id="v-broadcast" hidden>
+    <div class="panel">
+      <h3>發送通知</h3>
+      <p class="hint">發送給此活動所有「已報名」的報名者。替多人報名的人只會收到一則，{names} 會換成他報名的所有參加者。</p>
+      <label>活動<select class="event-select" id="b-event"></select></label>
+      <div class="box" id="b-info">請先選擇活動</div>
+      <label>訊息內容 <small>純文字，換行會照原樣呈現</small><textarea id="b-text" style="min-height:180px"></textarea></label>
+      <div class="actions">
+        <button class="btn ghost" id="b-cancel" hidden>取消</button>
+        <button class="btn primary" id="b-send" disabled>發送</button>
+      </div>
+      <div class="msg" id="msg-broadcast"></div>
+    </div>
+  </section>
+
+  <!-- 4. 統計與點名表 -->
+  <section class="view narrow" id="v-roster" hidden>
+    <div class="panel">
+      <h3>報名統計</h3>
+      <p class="hint">建立或重建「報名統計」工作表。人數使用公式，之後有人報名或取消會自動更新；新增活動後再按一次即可加入。</p>
+      <div class="actions" style="justify-content:flex-start"><button class="btn primary" id="s-refresh">更新報名統計</button></div>
+      <div class="msg" id="msg-stats"></div>
+    </div>
+    <div class="panel" style="margin-top:14px">
+      <h3>匯出點名表</h3>
+      <p class="hint">產生一張可列印的點名表分頁，依小組排序，含額外欄位與簽到勾選框。同一活動重新匯出會覆蓋舊的點名表。</p>
+      <label>活動<select class="event-select" id="r-event"></select></label>
+      <div class="actions" style="justify-content:flex-start"><button class="btn primary" id="r-export">匯出點名表</button></div>
+      <div class="msg" id="msg-roster"></div>
+    </div>
+  </section>
+
+<script>
+const INITIAL_TAB = <?!= JSON.stringify(initialTab) ?>;
+const S = { events: [], groups: [], editing: null, image: '', fields: [], people: [], preview: null };
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+// google.script.run 包成 Promise
+const run = (fn, ...args) => new Promise((resolve, reject) =>
+  google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn](...args));
+
+function say(id, text, type) { const el = $('#' + id); el.textContent = text || ''; el.className = 'msg ' + (type || ''); }
+function busy(btn, on, label) {
+  if (on) { btn.dataset.l = btn.textContent; btn.textContent = label || '處理中'; btn.disabled = true; }
+  else { btn.textContent = btn.dataset.l || btn.textContent; btn.disabled = false; }
+}
+
+/* ========== 分頁 ========== */
+function showTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  document.querySelectorAll('.view').forEach(v => { v.hidden = v.id !== 'v-' + name; });
+}
+document.querySelectorAll('.tab').forEach(t => t.onclick = () => showTab(t.dataset.tab));
+
+/* ========== 活動清單 ========== */
+function renderEventList() {
+  $('#event-list').innerHTML = S.events.length ? S.events.map(e =>
+    '<div class="item' + (S.editing === e.id ? ' sel' : '') + '" data-id="' + esc(e.id) + '">' +
+    '<b>' + esc(e.name) + '</b>' +
+    '<span class="chip ' + (e.open ? 'ok' : 'off') + '">' + (e.open ? '開放中' : '未開放') + '</span>' +
+    '<small>' + esc(e.date) + '</small><br>' +
+    '<small>已報名 ' + e.active + (e.cap ? ' / ' + e.cap : '') + (e.cancelled ? '，取消 ' + e.cancelled : '') + '</small>' +
+    '</div>').join('') : '<p class="hint">尚無活動，請按「新增活動」</p>';
+  document.querySelectorAll('#event-list .item').forEach(el => el.onclick = () => loadEvent(el.dataset.id));
+
+  // 其他分頁的活動下拉選單
+  const opts = '<option value="">請選擇活動</option>' + S.events.map(e =>
+    '<option value="' + esc(e.id) + '">' + esc(e.name) + '（' + esc(e.date.slice(0, 10)) + '，已報名 ' + e.active + '）</option>').join('');
+  document.querySelectorAll('.event-select').forEach(sel => { const v = sel.value; sel.innerHTML = opts; sel.value = v; });
+}
+
+/* ========== 活動表單 ========== */
+function parseFields(str) {
+  return String(str || '').split(/[;；]/).map(s => s.trim()).filter(Boolean).map(s => {
+    const i = s.search(/[:：]/);
+    return i < 0 ? { label: s, options: '' } : { label: s.slice(0, i).trim(), options: s.slice(i + 1).split('|').map(x => x.trim()).filter(Boolean).join('、') };
+  });
+}
+function serializeFields() {
+  return S.fields.map(f => {
+    const label = f.label.replace(/[;；:：|]/g, '').trim();
+    if (!label) return '';
+    const opts = f.options.split(/[、,，|]/).map(x => x.replace(/[;；:：]/g, '').trim()).filter(Boolean);
+    return opts.length ? label + ':' + opts.join('|') : label;
+  }).filter(Boolean).join(';');
+}
+function renderFields() {
+  $('#fields').innerHTML = S.fields.map((f, i) =>
+    '<div class="fieldrow"><input data-fi="' + i + '" data-k="label" value="' + esc(f.label) + '" placeholder="欄位名稱，例如 交通需求">' +
+    '<input data-fi="' + i + '" data-k="options" value="' + esc(f.options) + '" placeholder="選項，例如 需要、不需要（留空為文字欄位）">' +
+    '<button class="btn ghost small" data-rm="' + i + '">移除</button></div>').join('');
+}
+$('#fields').addEventListener('input', e => { const t = e.target; if (t.dataset.fi) S.fields[+t.dataset.fi][t.dataset.k] = t.value; });
+$('#fields').addEventListener('click', e => { const i = e.target.dataset.rm; if (i !== undefined) { S.fields.splice(+i, 1); renderFields(); } });
+$('#btn-add-field').onclick = () => { S.fields.push({ label: '', options: '' }); renderFields(); };
+
+function setImage(url) {
+  S.image = url || '';
+  const box = $('#cover-box');
+  box.style.backgroundImage = S.image ? 'url("' + S.image.replace(/"/g, '%22') + '")' : '';
+  box.textContent = S.image ? '' : '尚未上傳';
+}
+
+function fillForm(d) {
+  S.editing = d ? d.id : null;
+  $('#form-title').textContent = d ? '編輯活動' : '新增活動';
+  $('#f-id').value = d ? d.id : '';
+  $('#f-id').disabled = !!d;
+  $('#f-name').value = d ? d.name : '';
+  $('#f-date').value = d ? d.date : '';
+  $('#f-place').value = d ? d.place : '';
+  $('#f-deadline').value = d ? d.deadline : '';
+  $('#f-cap').value = d ? d.cap : '';
+  $('#f-open').checked = d ? d.open : true;
+  $('#f-desc').value = d ? d.desc : '';
+  $('#f-remind-at').value = d ? d.remindAt : '';
+  $('#f-remind-text').value = d ? d.remindText : '';
+  $('#f-reset').checked = false;
+  $('#reminded').textContent = d && d.reminded ? '發送紀錄：' + d.reminded : '';
+  $('#reset-wrap').hidden = !(d && d.reminded);
+  S.fields = parseFields(d ? d.fields : '');
+  renderFields();
+  setImage(d ? d.image : '');
+  $('#img-status').textContent = '';
+  say('msg-events', '');
+  renderEventList();
+}
+
+async function loadEvent(id) {
+  say('msg-events', '載入中⋯');
+  try { fillForm(await run('adminGetEvent', id)); }
+  catch (e) { say('msg-events', e.message, 'err'); }
+}
+
+$('#btn-new').onclick = () => {
+  fillForm(null);
+  // 新活動預設提醒訊息範本
+  $('#f-remind-text').value = '【活動名稱】聚會提醒\n\n平安！明天的聚會即將開始，期待與你一同參與。\n\n若無法出席，請透過官方 LINE 留言告知，謝謝！';
+};
+
+$('#btn-save').onclick = async () => {
+  const btn = $('#btn-save');
+  const f = {
+    id: $('#f-id').value.trim(), name: $('#f-name').value.trim(), date: $('#f-date').value,
+    place: $('#f-place').value.trim(), deadline: $('#f-deadline').value, cap: $('#f-cap').value,
+    open: $('#f-open').checked, desc: $('#f-desc').value, fields: serializeFields(),
+    remindAt: $('#f-remind-at').value, remindText: $('#f-remind-text').value,
+    resetReminder: $('#f-reset').checked, image: S.image
+  };
+  if (f.cap !== '') f.cap = Number(f.cap);
+  if (f.remindAt && !f.remindText.trim()) return say('msg-events', '已設定提醒時間，請填寫提醒訊息', 'err');
+  busy(btn, true, '儲存中');
+  try {
+    const isNew = !S.editing;
+    S.events = await run('adminSaveEvent', f, isNew);
+    S.editing = f.id;
+    renderEventList();
+    await loadEvent(f.id);
+    say('msg-events', isNew ? '已新增活動' : '已儲存變更', 'ok');
+  } catch (e) {
+    say('msg-events', e.message, 'err');
+  } finally { busy(btn, false); }
+};
+
+/* ========== 封面圖片：裁成 16:9、縮成 1200×675、壓縮為 JPEG ========== */
+$('#btn-pick').onclick = () => $('#file').click();
+$('#btn-clear-img').onclick = () => { setImage(''); $('#img-status').textContent = '已移除，儲存後生效'; };
+
+$('#file').onchange = async e => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  const status = $('#img-status');
+  status.textContent = '處理圖片中⋯';
+  try {
+    const dataUrl = await cropToJpeg(file, 1200, 675);
+    status.textContent = '上傳中⋯';
+    const r = await run('adminUploadImage', dataUrl, $('#f-id').value.trim() || 'new');
+    setImage(r.url);
+    status.textContent = '上傳完成，記得按「儲存活動」';
+  } catch (err) {
+    status.textContent = err.message || '圖片處理失敗';
+  }
+};
+
+function cropToJpeg(file, W, H) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = W; canvas.height = H;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+      // 置中裁切，填滿 16:9
+      const scale = Math.max(W / img.width, H / img.height);
+      const sw = W / scale, sh = H / scale;
+      ctx.drawImage(img, (img.width - sw) / 2, (img.height - sh) / 2, sw, sh, 0, 0, W, H);
+      URL.revokeObjectURL(url);
+      let q = 0.85, out = canvas.toDataURL('image/jpeg', q);
+      while (out.length > 450000 && q > 0.5) { q -= 0.1; out = canvas.toDataURL('image/jpeg', q); }
+      resolve(out);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('無法讀取這張圖片，請改用 JPG 或 PNG')); };
+    img.src = url;
+  });
+}
+
+/* ========== 補登報名 ========== */
+function groupOptions(sel) {
+  return '<option value="">請選擇小組</option>' + S.groups.map(g => '<option' + (g === sel ? ' selected' : '') + '>' + esc(g) + '</option>').join('');
+}
+function renderPeople() {
+  $('#m-people').innerHTML = S.people.map((p, i) =>
+    '<div class="person"><input data-pi="' + i + '" data-k="name" value="' + esc(p.name) + '" placeholder="姓名" maxlength="20">' +
+    '<select data-pi="' + i + '" data-k="group">' + groupOptions(p.group) + '</select>' +
+    '<button class="btn ghost small" data-prm="' + i + '"' + (S.people.length === 1 ? ' disabled' : '') + '>移除</button></div>').join('');
+}
+['input', 'change'].forEach(t => $('#m-people').addEventListener(t, e => {
+  const el = e.target; if (el.dataset.pi !== undefined) S.people[+el.dataset.pi][el.dataset.k] = el.value;
+}));
+$('#m-people').addEventListener('click', e => { const i = e.target.dataset.prm; if (i !== undefined) { S.people.splice(+i, 1); renderPeople(); } });
+$('#m-add').onclick = () => {
+  if (S.people.length >= 10) return say('msg-manual', '一次最多 10 位', 'err');
+  S.people.push({ name: '', group: S.people[S.people.length - 1].group }); renderPeople();
+};
+$('#m-event').onchange = () => {
+  const e = S.events.find(x => x.id === $('#m-event').value);
+  $('#m-info').textContent = e ? '目前已報名 ' + e.active + ' 位' + (e.cap ? '，名額 ' + e.cap + '，剩餘 ' + Math.max(e.cap - e.active, 0) + ' 位' : '，名額不限') + (e.open ? '' : '（目前未開放報名，仍可補登）') : '';
+};
+$('#m-submit').onclick = async () => {
+  const btn = $('#m-submit');
+  const eventId = $('#m-event').value;
+  if (!eventId) return say('msg-manual', '請選擇活動', 'err');
+  const people = S.people.map(p => ({ name: p.name.trim(), group: p.group }));
+  if (people.some(p => !p.name)) return say('msg-manual', '請填寫每一位的姓名', 'err');
+  if (people.some(p => !p.group)) return say('msg-manual', '請選擇每一位的小組', 'err');
+  busy(btn, true, '登記中');
+  try {
+    const r = await run('adminManualRegister', eventId, people, $('#m-note').value, $('#m-over').checked);
+    S.events = r.events; renderEventList(); $('#m-event').onchange();
+    S.people = [{ name: '', group: '' }]; renderPeople(); $('#m-note').value = ''; $('#m-over').checked = false;
+    say('msg-manual', '已補登 ' + r.count + ' 位', 'ok');
+  } catch (e) { say('msg-manual', e.message, 'err'); }
+  finally { busy(btn, false); }
+};
+
+/* ========== 發送通知 ========== */
+function resetSend() {
+  $('#b-send').textContent = '發送'; $('#b-send').className = 'btn primary'; $('#b-cancel').hidden = true;
+  $('#b-send').dataset.confirm = '';
+}
+$('#b-event').onchange = async () => {
+  resetSend(); say('msg-broadcast', '');
+  const id = $('#b-event').value;
+  S.preview = null; $('#b-send').disabled = true;
+  if (!id) { $('#b-info').textContent = '請先選擇活動'; return; }
+  $('#b-info').textContent = '計算收件人中⋯';
+  try {
+    const p = await run('adminBroadcastPreview', id);
+    S.preview = p;
+    const e = S.events.find(x => x.id === id);
+    $('#b-info').innerHTML = '將發送給 <b>' + p.recipients + '</b> 個 LINE 帳號（共 ' + p.participants + ' 位參加者）' +
+      (p.offline.length ? '<br><span class="hint">以下為補登、沒有 LINE 的參加者，請另外聯絡：' + esc(p.offline.join('、')) + '</span>' : '');
+    if (!$('#b-text').value.trim()) $('#b-text').value = '【' + (e ? e.name : '') + '】通知\n\n';
+    $('#b-send').disabled = p.recipients === 0;
+  } catch (err) { $('#b-info').textContent = err.message; }
+};
+$('#b-cancel').onclick = resetSend;
+$('#b-send').onclick = async () => {
+  const btn = $('#b-send');
+  if (!$('#b-text').value.trim()) return say('msg-broadcast', '請輸入訊息內容', 'err');
+  // 第一次按下：要求確認
+  if (!btn.dataset.confirm) {
+    btn.dataset.confirm = '1'; btn.textContent = '確認發送給 ' + S.preview.recipients + ' 位'; btn.className = 'btn danger';
+    $('#b-cancel').hidden = false; return;
+  }
+  busy(btn, true, '發送中');
+  try {
+    const r = await run('adminBroadcast', $('#b-event').value, $('#b-text').value, S.preview.recipients);
+    say('msg-broadcast', '已發送：成功 ' + r.ok + ' / ' + r.total + ' 則', r.ok === r.total ? 'ok' : 'err');
+    $('#b-text').value = '';
+  } catch (e) { say('msg-broadcast', e.message, 'err'); }
+  finally { busy(btn, false); resetSend(); }
+};
+
+/* ========== 統計與點名表 ========== */
+$('#s-refresh').onclick = async () => {
+  const btn = $('#s-refresh'); busy(btn, true, '更新中');
+  try { const r = await run('adminRefreshStats'); say('msg-stats', '已更新 ' + r.count + ' 個活動，請查看「報名統計」工作表', 'ok'); }
+  catch (e) { say('msg-stats', e.message, 'err'); }
+  finally { busy(btn, false); }
+};
+$('#r-export').onclick = async () => {
+  const id = $('#r-event').value;
+  if (!id) return say('msg-roster', '請選擇活動', 'err');
+  const btn = $('#r-export'); busy(btn, true, '匯出中');
+  try { const r = await run('adminExportRoster', id); say('msg-roster', '已建立「' + r.sheetName + '」，共 ' + r.count + ' 位。關閉視窗即可查看或列印。', 'ok'); }
+  catch (e) { say('msg-roster', e.message, 'err'); }
+  finally { busy(btn, false); }
+};
+
+/* ========== 啟動 ========== */
+(async () => {
+  showTab(INITIAL_TAB || 'events');
+  S.people = [{ name: '', group: '' }];
+  try {
+    const b = await run('adminBootstrap');
+    S.events = b.events; S.groups = b.groups;
+    renderPeople();
+    fillForm(null);
+  } catch (e) { say('msg-events', e.message, 'err'); }
+})();
+</script>
+</body>
+</html>
