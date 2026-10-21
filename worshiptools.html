@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>敬拜同工工具｜花蓮靈糧堂</title>
+<title>敬拜同工查詢｜花蓮靈糧堂</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -47,9 +47,8 @@
   .when { font-size: 20px; font-weight: 800; }
   .type { display: inline-block; margin-top: 2px; padding: 1px 10px; border-radius: 10px; font-size: 12px; font-weight: 600;
           color: var(--blue-dk); background: var(--blue-lt); }
-  .play-all { flex: 0 0 auto; display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 10px;
-              font-size: 14px; font-weight: 600; color: var(--white); background: var(--blue); }
-  .play-all.on { background: var(--blue-dk); }
+  .report-btn { flex: 0 0 auto; display: flex; align-items: center; gap: 4px; padding: 6px 10px; border-radius: 10px;
+                font-size: 13px; font-weight: 600; color: var(--gray-4); background: var(--gray-1); border: 1px solid var(--gray-2); }
   .kv { display: grid; grid-template-columns: 52px 1fr; gap: 6px 10px; font-size: 15px; }
   .kv dt { color: var(--gray-4); font-size: 13px; padding-top: 2px; }
   .kv dd { font-weight: 500; white-space: pre-line; word-break: break-word; }
@@ -58,8 +57,51 @@
   .roster-toggle svg { transition: transform .2s; }
   .roster-toggle.open svg { transform: rotate(180deg); }
   .roster { margin-top: 8px; }
-  .playlist { margin-top: 14px; border-radius: 10px; overflow: hidden; background: #000; aspect-ratio: 16/9; }
-  .playlist iframe { width: 100%; height: 100%; border: 0; display: block; }
+  /* ── 連續播放 ── */
+  .pl-bar { display: flex; gap: 8px; margin-top: 14px; }
+  .play-all { flex: 1; height: 42px; display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 10px;
+              font-size: 15px; font-weight: 700; color: var(--white); background: var(--blue); }
+  .play-all.on { background: var(--blue-dk); }
+  .pl-loop { flex: 0 0 auto; height: 42px; padding: 0 12px; display: flex; align-items: center; gap: 6px; border-radius: 10px;
+             font-size: 14px; font-weight: 700; color: var(--gray-4); background: var(--gray-2); }
+  .pl-loop.on { color: var(--white); background: var(--blue); }
+  .playlist { margin-top: 12px; }
+  .pl-video { position: relative; border-radius: 10px; overflow: hidden; background: #000; aspect-ratio: 16/9; }
+  .pl-video > div, .pl-video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  .pl-list { list-style: none; margin-top: 6px; }
+  .pl-list li { display: flex; align-items: center; gap: 10px; padding: 9px 2px; border-bottom: 1px solid var(--gray-2); font-size: 15px; cursor: pointer; }
+  .pl-list li:last-child { border-bottom: 0; }
+  .pl-list .no { width: 22px; height: 22px; flex: 0 0 auto; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+                 font-size: 12px; font-weight: 700; color: var(--gray-4); background: var(--gray-1); }
+  .pl-list .t { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pl-list li.cur { color: var(--blue); font-weight: 700; }
+  .pl-list li.cur .no { color: var(--white); background: var(--blue); }
+  .pl-list li.bad .t { color: var(--gray-3); }
+  .pl-list .yt { flex: 0 0 auto; font-size: 12px; font-weight: 700; color: var(--orange); text-decoration: none; }
+  .pl-msg { margin-top: 6px; font-size: 12px; color: var(--gray-4); }
+
+  /* ── 問題回報 ── */
+  .mask { position: fixed; inset: 0; z-index: 70; display: flex; align-items: flex-end; justify-content: center; background: rgba(15,20,30,.45); }
+  .sheet { width: 100%; max-width: 560px; max-height: 92vh; overflow-y: auto; padding: 18px 16px;
+           padding-bottom: max(18px, env(safe-area-inset-bottom)); border-radius: 18px 18px 0 0; background: var(--white); }
+  .sheet-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; font-size: 18px; font-weight: 800; }
+  .sheet-head button { width: 34px; height: 34px; border-radius: 50%; background: var(--gray-1); font-size: 20px; line-height: 1; color: var(--gray-4); }
+  .ctx { margin-bottom: 14px; font-size: 13px; color: var(--gray-4); }
+  .field { margin-bottom: 14px; }
+  .field > label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 700; color: var(--gray-4); }
+  .rtypes { display: flex; flex-wrap: wrap; gap: 8px; }
+  .rtypes button { padding: 6px 12px; border-radius: 16px; font-size: 14px; border: 1.5px solid var(--gray-2); background: var(--white); }
+  .rtypes button.on { color: var(--white); background: var(--blue); border-color: var(--blue); }
+  .field select, .field textarea { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1.5px solid var(--gray-2);
+                                   font: inherit; font-size: 16px; color: var(--black); background: var(--white); }
+  .field textarea { resize: vertical; min-height: 110px; }
+  .hint { margin-bottom: 12px; font-size: 12px; color: var(--gray-4); }
+  .submit { width: 100%; height: 48px; border-radius: 12px; font-size: 16px; font-weight: 800; color: var(--white); background: var(--blue); }
+  .submit:disabled { opacity: .5; }
+  .foot-report { display: block; margin: 4px auto 12px; padding: 10px 18px; border-radius: 10px; font-size: 14px; font-weight: 700;
+                 color: var(--gray-4); background: var(--white); border: 1px solid var(--gray-2); }
+  .toast { position: fixed; left: 50%; bottom: max(24px, env(safe-area-inset-bottom)); z-index: 80; transform: translateX(-50%);
+           padding: 10px 18px; border-radius: 20px; font-size: 14px; color: var(--white); background: rgba(26,33,48,.92); white-space: nowrap; }
 
   /* ── 歌曲卡 ── */
   .song-head { padding: 14px 16px 10px; }
@@ -146,10 +188,39 @@
   <div class="vempty" id="vEmpty" hidden>這首歌的歌譜尚未上傳</div>
 </div>
 
+<div class="mask" id="report" hidden>
+  <form class="sheet" id="reportForm" autocomplete="off">
+    <div class="sheet-head">問題回報<button type="button" id="rClose" aria-label="關閉">×</button></div>
+    <div class="ctx" id="rCtx"></div>
+    <div class="field">
+      <label>問題類型</label>
+      <div class="rtypes" id="rType">
+        <button type="button" class="on">歌詞錯誤</button>
+        <button type="button">歌譜問題</button>
+        <button type="button">影片無法播放</button>
+        <button type="button">排班資料</button>
+        <button type="button">頁面操作</button>
+        <button type="button">其他</button>
+      </div>
+    </div>
+    <div class="field">
+      <label for="rSong">相關歌曲</label>
+      <select id="rSong"></select>
+    </div>
+    <div class="field">
+      <label for="rText">說明</label>
+      <textarea id="rText" maxlength="500" placeholder="例如：第二段副歌少了一句"></textarea>
+    </div>
+    <p class="hint" id="rHint"></p>
+    <button class="submit" type="submit" id="rSubmit">送出</button>
+  </form>
+</div>
+<div class="toast" id="toast" hidden></div>
+
 <script>
 /* ═════════════ 設定 ═════════════ */
 const API_URL = 'https://script.google.com/macros/s/AKfycbxyV_3V66PKFx7n4284C17_kDQbBsjT8qptrG1uBMGBeo1ZwGbiqmXoEIymw6BMz9Q/exec';   // GAS 部署網址
-const LIFF_ID = '2007843015-jGJQsDWB';                                // 有 LIFF ID 時填入，用於 LINE 分享
+const LIFF_ID = '';                                // 有 LIFF ID 時填入：LINE 分享、問題回報傳到官方帳號聊天室
 const SUNDAY_SWITCH_HOUR = 13;                     // 主日當天幾點後切換到下一週
 const OTHER_SWITCH_HOUR = 22;                      // 非主日聚會當天幾點後視為結束
 const SITE_PARAM = { main: '本堂', xinxiu: '新秀' };
@@ -165,7 +236,8 @@ const ICON = {
   pause: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="6.5" y="5" width="4" height="14" rx="1"/><rect x="13.5" y="5" width="4" height="14" rx="1"/></svg>',
   loop: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l3 3-3 3"/><path d="M4 11V9a4 4 0 0 1 4-4h12"/><path d="M7 22l-3-3 3-3"/><path d="M20 13v2a4 4 0 0 1-4 4H4"/></svg>',
   share: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18 16c-.8 0-1.5.3-2 .8l-7.3-4.2c.1-.2.1-.4.1-.6s0-.4-.1-.6L16 7.2c.5.5 1.2.8 2 .8 1.7 0 3-1.3 3-3s-1.3-3-3-3-3 1.3-3 3c0 .2 0 .4.1.6L7.8 9.8C7.3 9.3 6.6 9 5.8 9c-1.7 0-3 1.3-3 3s1.3 3 3 3c.8 0 1.5-.3 2-.8l7.3 4.2c-.1.2-.1.4-.1.6 0 1.6 1.3 2.9 2.9 2.9s2.9-1.3 2.9-2.9S19.6 16 18 16z"/></svg>',
-  chev: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>'
+  chev: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>',
+  report: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M12 7v4M12 14h.01"/></svg>'
 };
 
 /* ═════════════ 日期工具 ═════════════ */
@@ -295,12 +367,21 @@ function renderService() {
         <div class="when">${md(s.date)}（${WD[d.getDay()]}）</div>
         <span class="type">${esc(S.site)}｜${esc(s.label)}</span>
       </div>
-      ${vids.length > 1 ? `<button class="play-all" id="playAll">${ICON.play}連續播放</button>` : ''}
+      <button class="report-btn" data-report>${ICON.report}問題回報</button>
     </div>
     <dl class="kv">${rows}</dl>
     ${roster ? `<button class="roster-toggle ${rosterOpen ? 'open' : ''}" id="rosterBtn">服事名單 ${ICON.chev}</button>
     <dl class="kv roster" id="roster" ${rosterOpen ? '' : 'hidden'}>${roster}</dl>` : ''}
-    <div class="playlist" id="playlist" hidden></div>
+    ${vids.length > 1 ? `
+    <div class="pl-bar">
+      <button class="play-all" id="playAll">${ICON.play}連續播放</button>
+      <button class="pl-loop ${PL.loop ? 'on' : ''}" id="plLoop" aria-pressed="${PL.loop}">${ICON.loop}循環清單</button>
+    </div>
+    <div class="playlist" id="playlist" hidden>
+      <div class="pl-video" id="plVideo"></div>
+      <ol class="pl-list" id="plList"></ol>
+      <p class="pl-msg" id="plMsg" hidden></p>
+    </div>` : ''}
   </section>`;
 
   if (!S.view.length) {
@@ -325,12 +406,13 @@ function renderService() {
           <button class="btn ic loop" data-act="loop" data-i="${i}" ${v.vid ? '' : 'disabled'} aria-label="單曲循環">${ICON.loop}</button>
           <button class="btn txt" data-act="lyrics" data-i="${i}" ${v.lyrics ? '' : 'disabled'}>${v.lyrics ? '歌詞' : '無歌詞'}</button>
           <button class="btn txt" data-act="sheet" data-i="${i}">${v.sheet ? '歌譜' : '無歌譜'}</button>
-          <button class="btn share" data-act="share" data-i="${i}" ${v.lyrics ? '' : 'disabled'} aria-label="分享歌詞">${ICON.share}</button>
+          <button class="btn share" data-act="share" data-i="${i}" ${v.lyrics || v.url ? '' : 'disabled'} aria-label="分享">${ICON.share}</button>
         </div>
         <div class="lyrics" id="lyr-${i}" hidden></div>
       </section>`;
     }).join('');
   }
+  html += `<button class="foot-report" data-report>回報問題或建議</button>`;
   if (S.data.updated) html += `<p class="foot">資料更新：${esc(S.data.updated.replace('T', ' ').slice(0, 16))}</p>`;
   main.innerHTML = html;
 }
@@ -371,7 +453,7 @@ function loadYT() {
 async function play(i) {
   const v = S.view[i];
   if (!v || !v.vid) return;
-  stopPlaylist();
+  pausePlaylist();
   pauseOthers(i);
   const p = S.players[i];
   if (p && p.playVideo) { p.playVideo(); return; }
@@ -392,7 +474,7 @@ async function play(i) {
 }
 function onState(i, e) {
   const btn = $(`[data-act="toggle"][data-i="${i}"]`);
-  if (e.data === YT.PlayerState.PLAYING) { pauseOthers(i); if (btn) btn.innerHTML = ICON.pause; }
+  if (e.data === YT.PlayerState.PLAYING) { pauseOthers(i); pausePlaylist(); if (btn) btn.innerHTML = ICON.pause; }
   if (e.data === YT.PlayerState.PAUSED && btn) btn.innerHTML = ICON.play;
   if (e.data === YT.PlayerState.ENDED) {
     if (S.loop.has(i)) { e.target.seekTo(0); e.target.playVideo(); }
@@ -405,20 +487,96 @@ function pauseOthers(i) {
 function stopAll() {
   Object.values(S.players).forEach(p => { try { p.destroy(); } catch (e) {} });
   S.players = {}; S.loop.clear();
+  stopPlaylist();
 }
-function togglePlaylist() {
-  const box = $('#playlist'), btn = $('#playAll');
-  if (!box.hidden) { stopPlaylist(); return; }
+
+/* ═════════════ 連續播放（自行管理佇列，遇到禁止嵌入的影片自動跳過） ═════════════ */
+const PL = { player: null, ready: false, queue: [], pos: -1, fails: 0, bad: new Set(), loop: readPref('plLoop') === '1' };
+
+function startPlaylist(pos = 0) {
   Object.values(S.players).forEach(p => p.pauseVideo && p.pauseVideo());
-  const ids = S.view.map(v => v.vid).filter(Boolean);
-  box.innerHTML = `<iframe src="https://www.youtube.com/embed/${ids[0]}?autoplay=1&playsinline=1&rel=0&playlist=${ids.slice(1).join(',')}" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
-  box.hidden = false;
+  PL.queue = S.view.map((v, i) => (v.vid ? i : -1)).filter(i => i > -1);
+  if (!PL.queue.length) return;
+  PL.fails = 0;
+  $('#plMsg').hidden = true;
+  $('#playlist').hidden = false;
+  const btn = $('#playAll');
   btn.classList.add('on'); btn.innerHTML = ICON.pause + '停止播放';
+  plGo(pos);
+}
+async function plGo(pos) {
+  PL.pos = pos;
+  renderPlList();
+  const vid = S.view[PL.queue[pos]].vid;
+  if (PL.player && PL.ready) { PL.player.loadVideoById(vid); return; }
+  if (PL.player) return;                                   // 播放器建立中，onReady 會載入目前這首
+  await loadYT();
+  if ($('#playlist').hidden) return;
+  $('#plVideo').innerHTML = '<div></div>';
+  PL.player = new YT.Player($('#plVideo').firstChild, {
+    videoId: vid,
+    playerVars: { autoplay: 1, playsinline: 1, rel: 0 },
+    events: {
+      onReady: e => {
+        PL.ready = true;
+        const cur = S.view[PL.queue[PL.pos]].vid;
+        if (e.target.getVideoData && e.target.getVideoData().video_id !== cur) e.target.loadVideoById(cur);
+        else e.target.playVideo();
+      },
+      onStateChange: plState,
+      onError: plError
+    }
+  });
+}
+function plNext() {
+  let p = PL.pos;
+  for (let step = 0; step < PL.queue.length; step++) {
+    p++;
+    if (p >= PL.queue.length) {
+      if (!PL.loop) { plMsg('清單播放完畢'); finishPlaylist(); return; }
+      p = 0;
+    }
+    if (!PL.bad.has(PL.queue[p])) { plGo(p); return; }   // 已知無法播放的影片直接跳過
+  }
+  plMsg('清單中的影片都無法在頁面內播放'); finishPlaylist();
+}
+function plState(e) {
+  if (e.data === YT.PlayerState.PLAYING) {
+    PL.fails = 0;
+    Object.values(S.players).forEach(p => p.pauseVideo && p.pauseVideo());
+  }
+  if (e.data === YT.PlayerState.ENDED) plNext();
+}
+function plError() {
+  PL.bad.add(PL.queue[PL.pos]);
+  PL.fails++;
+  if (PL.fails >= PL.queue.length) { plMsg('清單中的影片都無法在頁面內播放'); finishPlaylist(); return; }
+  plMsg('已略過無法在頁面內播放的影片');
+  plNext();
+}
+function plMsg(t) { const m = $('#plMsg'); if (m) { m.textContent = t; m.hidden = false; } }
+function renderPlList() {
+  const ol = $('#plList');
+  if (!ol) return;
+  ol.innerHTML = PL.queue.map((idx, p) => {
+    const v = S.view[idx], bad = PL.bad.has(idx);
+    return `<li class="${p === PL.pos ? 'cur' : ''} ${bad ? 'bad' : ''}" data-pl="${p}">
+      <span class="no">${p + 1}</span><span class="t">${esc(v.title)}${v.type === 'response' ? '（回應）' : ''}</span>
+      ${bad ? `<a class="yt" href="https://youtu.be/${v.vid}" target="_blank" rel="noopener">到 YouTube 聽</a>` : ''}</li>`;
+  }).join('');
+}
+function pausePlaylist() { if (PL.player && PL.ready && PL.player.pauseVideo) PL.player.pauseVideo(); }
+/** 播完或全部失敗：保留清單畫面，按鈕回到可重新播放 */
+function finishPlaylist() {
+  PL.pos = -1; renderPlList();
+  const btn = $('#playAll');
+  if (btn) { btn.classList.remove('on'); btn.innerHTML = ICON.play + '連續播放'; }
 }
 function stopPlaylist() {
+  if (PL.player) { try { PL.player.destroy(); } catch (e) {} }
+  PL.player = null; PL.ready = false; PL.pos = -1; PL.fails = 0; PL.bad.clear();
   const box = $('#playlist'), btn = $('#playAll');
-  if (!box || box.hidden) return;
-  box.innerHTML = ''; box.hidden = true;
+  if (box) { box.hidden = true; $('#plVideo').innerHTML = ''; $('#plMsg').hidden = true; }
   if (btn) { btn.classList.remove('on'); btn.innerHTML = ICON.play + '連續播放'; }
 }
 
@@ -456,13 +614,97 @@ function closeViewer() {
 /* ═════════════ 分享 ═════════════ */
 async function share(i) {
   const v = S.view[i];
-  const text = `${v.title}${v.source ? '（' + v.source + '）' : ''}\n\n${lyricsPlain(v.lyrics)}`;
-  if (window.liff && liff.isInClient && liff.isInClient() && liff.isApiAvailable('shareTargetPicker')) {
+  const link = v.vid ? `https://youtu.be/${v.vid}` : v.url;      // 去掉 ?si= 追蹤參數
+  const text = [
+    `${v.title}${v.source ? '（' + v.source + '）' : ''}`,
+    link,
+    v.lyrics ? '\n' + lyricsPlain(v.lyrics) : ''
+  ].filter(Boolean).join('\n');
+  if (inLINE() && liff.isApiAvailable('shareTargetPicker')) {
     try { await liff.shareTargetPicker([{ type: 'text', text }]); } catch (e) {}
     return;
   }
   if (navigator.share) { try { await navigator.share({ text }); } catch (e) {} return; }
-  try { await navigator.clipboard.writeText(text); alert('歌詞已複製'); } catch (e) { alert('無法複製，請手動選取歌詞'); }
+  try { await navigator.clipboard.writeText(text); toast('已複製，可貼到聊天室'); } catch (e) { alert('無法複製，請手動選取歌詞'); }
+}
+
+/* ═════════════ LINE ═════════════ */
+let liffOK = false;                                    // liff.init 成功後才使用 LINE 功能
+function inLINE() { return liffOK && liff.isInClient(); }
+/** 只在「與官方帳號的一對一聊天室」開啟時，才把回報傳進聊天室，避免誤送到群組 */
+function canSendToOA() {
+  if (!inLINE() || !liff.isApiAvailable || !liff.isApiAvailable('sendMessages')) return false;
+  const c = liff.getContext && liff.getContext();
+  return !!c && c.type === 'utou';
+}
+
+/* ═════════════ 問題回報 ═════════════ */
+let rType = '歌詞錯誤';
+function openReport(songIdx) {
+  const s = currentService();
+  $('#rCtx').textContent = s ? `${S.site}｜${md(s.date)}（${WD[toDate(s.date).getDay()]}）${s.label}` : S.site;
+  $('#rSong').innerHTML = '<option value="">不限定歌曲</option>' +
+    S.view.map((v, i) => `<option value="${i}">${esc(v.title)}${v.type === 'response' ? '（回應）' : ''}</option>`).join('');
+  if (songIdx != null) $('#rSong').value = songIdx;
+  $('#rHint').textContent = canSendToOA()
+    ? '送出後，回報會出現在你與官方帳號的聊天室，同工會在那裡回覆你。'
+    : '回報會記錄給教會同工處理。';
+  $('#rSubmit').disabled = false; $('#rSubmit').textContent = '送出';
+  $('#report').hidden = false;
+  document.body.style.overflow = 'hidden';
+}
+function closeReport() {
+  $('#report').hidden = true;
+  document.body.style.overflow = '';
+}
+async function submitReport(e) {
+  e.preventDefault();
+  const content = $('#rText').value.trim();
+  if (!content) { $('#rText').focus(); return; }
+  const s = currentService();
+  const v = S.view[$('#rSong').value];
+  const song = v ? v.name : '';
+  const btn = $('#rSubmit');
+  btn.disabled = true; btn.textContent = '送出中…';
+
+  const text = [
+    '【問題回報｜敬拜同工查詢】',
+    `類型：${rType}`,
+    `場次：${$('#rCtx').textContent}`,
+    song ? `歌曲：${song}` : '',
+    `說明：${content}`
+  ].filter(Boolean).join('\n');
+
+  let via = '', name = '';
+  if (canSendToOA()) {
+    try { await liff.sendMessages([{ type: 'text', text }]); via = 'LINE'; } catch (err) {}
+    try { name = (await liff.getProfile()).displayName; } catch (err) {}
+  }
+  let logged = false;
+  try {
+    // text/plain 不會觸發 CORS 預檢，GAS 可以直接接收
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'report', name, site: S.site, date: s ? s.date : '', song, type: rType, text: content, via: via || '網頁', page: location.href })
+    });
+    logged = (await res.json()).ok === true;
+  } catch (err) {}
+
+  if (!via && !logged) {
+    btn.disabled = false; btn.textContent = '送出';
+    alert('送出失敗，請檢查網路後再試一次');
+    return;
+  }
+  $('#rText').value = '';
+  closeReport();
+  toast(via ? '已送出，回報已傳到官方帳號' : '已送出，謝謝你的回報');
+}
+let toastTimer = 0;
+function toast(t) {
+  const el = $('#toast');
+  el.textContent = t; el.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.hidden = true; }, 2600);
 }
 
 /* ═════════════ 偏好（僅存在本機） ═════════════ */
@@ -488,7 +730,22 @@ $('#dates').addEventListener('click', e => {
 });
 
 $('#main').addEventListener('click', e => {
-  if (e.target.closest('#playAll')) return togglePlaylist();
+  if (e.target.closest('[data-report]')) return openReport();
+  if (e.target.closest('#playAll')) return $('#playAll').classList.contains('on') ? stopPlaylist() : startPlaylist(0);
+  if (e.target.closest('#plLoop')) {
+    PL.loop = !PL.loop;
+    const b = $('#plLoop');
+    b.classList.toggle('on', PL.loop); b.setAttribute('aria-pressed', PL.loop);
+    writePref('plLoop', PL.loop ? '1' : '0');
+    toast(PL.loop ? '清單循環：開' : '清單循環：關');
+    return;
+  }
+  const li = e.target.closest('[data-pl]');
+  if (li && !e.target.closest('a')) {
+    if (!$('#playAll').classList.contains('on')) startPlaylist(+li.dataset.pl);
+    else plGo(+li.dataset.pl);
+    return;
+  }
   if (e.target.closest('#rosterBtn')) {
     const btn = $('#rosterBtn'), box = $('#roster');
     box.hidden = !box.hidden; btn.classList.toggle('open', !box.hidden);
@@ -527,11 +784,21 @@ $('#vClose').addEventListener('click', closeViewer);
 $('#vPrev').addEventListener('click', () => S.viewerIdx > 0 && openViewer(S.viewerIdx - 1));
 $('#vNext').addEventListener('click', () => S.viewerIdx < S.view.length - 1 && openViewer(S.viewerIdx + 1));
 
+$('#rClose').addEventListener('click', closeReport);
+$('#report').addEventListener('click', e => { if (e.target.id === 'report') closeReport(); });
+$('#rType').addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  rType = b.textContent;
+  $('#rType').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+});
+$('#reportForm').addEventListener('submit', submitReport);
+
 /* ═════════════ 啟動 ═════════════ */
 if (LIFF_ID) {
   const s = document.createElement('script');
   s.src = 'https://static.line-scdn.net/liff/edge/2/sdk.js';
-  s.onload = () => liff.init({ liffId: LIFF_ID }).catch(() => {});
+  s.onload = () => liff.init({ liffId: LIFF_ID }).then(() => { liffOK = true; }).catch(() => {});
   document.head.appendChild(s);
 }
 load();
