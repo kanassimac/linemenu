@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<title>花蓮靈糧堂｜課程與活動報名</title>
+<script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+/* 版型與配色與電子週報一致 */
+:root{
+  --fs:17px;
+  --c-primary:#6F9CC6;--c-primary-light:#DEE2E9;
+  --c-gold:#8EA2BE;--c-gold-light:#DEE2E9;
+  --c-text:#2C2C2A;--c-muted:#8EA2BE;
+  --c-border:#A4C4D8;--c-bg:#F4F7FA;--c-white:#FFFFFF;
+  --c-stripe:#EEF2F6;--c-danger:#B5574B;
+  --r:12px;--r-sm:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+[hidden]{display:none !important;}
+body{font-family:'PingFang TC','Noto Sans TC','Microsoft JhengHei',sans-serif;font-size:var(--fs);background:var(--c-bg);color:var(--c-text);line-height:1.8;-webkit-text-size-adjust:100%;padding-bottom:calc(24px + env(safe-area-inset-bottom));}
+
+/* 頂部字級列 */
+.topbar{position:sticky;top:0;z-index:100;background:var(--c-primary);display:flex;align-items:center;justify-content:space-between;padding:8px 14px;padding-top:calc(8px + env(safe-area-inset-top));gap:8px;}
+.topbar-left{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.topbar-label{color:#FFFFFF;font-size:12px;font-weight:700;}
+.tb-btn{background:rgba(255,255,255,.2);border:none;color:#FFFFFF;border-radius:6px;padding:5px 11px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;transition:background .15s;white-space:nowrap;}
+.tb-btn.active{background:rgba(255,255,255,.45);}
+.tb-btn:active{background:rgba(255,255,255,.6);}
+
+/* 標頭 */
+.header{background:var(--c-primary);color:#FFFFFF;padding:20px 18px 18px;text-align:center;}
+.header-name{font-size:1.2em;font-weight:700;letter-spacing:.05em;}
+.header-issue{font-size:1em;margin-top:4px;}
+
+/* 分頁切換 */
+.switch{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 10px 0;}
+.sw-btn{font-family:inherit;font-size:1em;font-weight:700;color:var(--c-text);background:var(--c-white);border:1px solid var(--c-border);border-radius:var(--r);padding:10px 8px;cursor:pointer;}
+.sw-btn.active{background:var(--c-primary);border-color:var(--c-primary);color:#FFFFFF;}
+
+/* 區塊 */
+.section{margin:10px 10px 0;background:var(--c-white);border-radius:var(--r);overflow:hidden;border:1px solid var(--c-border);}
+.sec-hd{padding:13px 15px;border-bottom:1px solid var(--c-border);}
+.sec-title{font-weight:700;font-size:1.2em;text-align:center;line-height:1.5;}
+.sec-body{padding:0 15px 15px;}
+.section.muted{opacity:.6;}
+.cover{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:var(--r-sm);margin-top:12px;background:var(--c-primary-light);}
+p{text-align:justify;}
+.desc{margin-top:12px;white-space:pre-line;}
+
+/* 表格 */
+table{width:100%;border-collapse:collapse;margin-top:12px;font-size:1em;table-layout:fixed;}
+th{background:var(--c-primary-light);padding:8px 6px;font-weight:700;border:1px solid var(--c-border);text-align:center;vertical-align:middle;}
+td{padding:8px 6px;border:1px solid var(--c-border);vertical-align:middle;line-height:1.6;text-align:center;}
+tr:nth-child(even) td{background:var(--c-stripe);}
+.td-label{font-weight:700;}
+.td-left{text-align:left !important;}
+.status-on{font-weight:700;color:var(--c-primary);}
+.status-off{color:var(--c-muted);}
+
+/* 按鈕 */
+.cta{text-align:center;margin:14px 0 2px;}
+.btn-main{display:inline-block;background:var(--c-primary);color:#FFFFFF;border:none;font-family:inherit;font-weight:700;font-size:1.2em;padding:12px 32px;border-radius:10px;letter-spacing:.04em;cursor:pointer;}
+.btn-main.block{display:block;width:100%;}
+.btn-main:disabled{background:var(--c-primary-light);color:var(--c-muted);cursor:default;}
+.btn-line{display:block;width:100%;background:var(--c-white);color:var(--c-text);border:1px solid var(--c-border);font-family:inherit;font-weight:700;font-size:1em;padding:10px 16px;border-radius:10px;margin-top:10px;cursor:pointer;}
+.btn-danger{background:var(--c-danger);}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;}
+.row2 .btn-line,.row2 .btn-main{margin-top:0;width:100%;font-size:1em;padding:12px 8px;}
+
+/* 狀態訊息 */
+.empty,.error{margin:10px;padding:40px 16px;text-align:center;color:var(--c-muted);background:var(--c-white);border:1px solid var(--c-border);border-radius:var(--r);}
+.error p{text-align:center;color:var(--c-text);}
+.error .btn-line{display:inline-block;width:auto;}
+.skeleton{margin:10px 10px 0;height:180px;border-radius:var(--r);border:1px solid var(--c-border);background:linear-gradient(90deg,#FFFFFF,var(--c-stripe),#FFFFFF);background-size:200% 100%;animation:shimmer 1.2s infinite linear;}
+@keyframes shimmer{to{background-position:-200% 0;}}
+
+/* 底部表單面板 */
+.sheet{position:fixed;inset:0;z-index:200;display:flex;align-items:flex-end;justify-content:center;}
+.scrim{position:absolute;inset:0;background:rgba(44,44,42,.45);}
+.panel{position:relative;width:100%;max-width:640px;max-height:92vh;overflow-y:auto;background:var(--c-bg);border-radius:var(--r) var(--r) 0 0;animation:up .2s ease-out;padding-bottom:calc(18px + env(safe-area-inset-bottom));}
+@keyframes up{from{transform:translateY(24px);opacity:0;}}
+.panel-hd{position:sticky;top:0;z-index:1;background:var(--c-primary);color:#FFFFFF;text-align:center;padding:14px 16px;}
+.panel-hd .t{font-size:1.2em;font-weight:700;line-height:1.5;}
+.panel-hd .s{font-size:.9em;margin-top:2px;}
+.panel-body{padding:4px 12px 0;}
+.sub-hd{font-size:1em;font-weight:700;letter-spacing:.04em;margin:14px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--c-border);}
+.p-card{background:var(--c-white);border:1px solid var(--c-border);border-radius:var(--r-sm);padding:10px 12px 2px;margin-bottom:10px;}
+.p-card-hd{display:flex;justify-content:space-between;align-items:center;font-weight:700;margin-bottom:4px;}
+.link{border:none;background:none;font-family:inherit;font-size:.9em;font-weight:700;color:var(--c-danger);cursor:pointer;}
+label{display:block;font-weight:700;margin-bottom:10px;}
+input,select{display:block;width:100%;margin-top:4px;padding:10px 12px;font-family:inherit;font-size:1em;font-weight:400;color:var(--c-text);background:var(--c-white);border:1px solid var(--c-border);border-radius:var(--r-sm);min-height:48px;}
+input:focus,select:focus{outline:2px solid var(--c-primary);outline-offset:1px;}
+.hint{color:var(--c-muted);font-size:.9em;margin-top:12px;text-align:center;}
+.done{text-align:center;padding:18px 4px 4px;}
+.done .mark{width:64px;height:64px;margin:0 auto 10px;border-radius:50%;display:grid;place-items:center;background:var(--c-primary);color:#FFFFFF;font-size:2em;font-weight:700;}
+.done p{text-align:center;}
+.confirm-box{background:var(--c-white);border:1px solid var(--c-border);border-radius:var(--r-sm);padding:12px;margin-top:12px;text-align:center;}
+
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:300;max-width:calc(100% - 32px);padding:10px 18px;border-radius:10px;background:rgba(44,44,42,.92);color:#FFFFFF;font-size:.95em;text-align:center;}
+</style>
+</head>
+<body>
+<!-- Top bar：字級 -->
+<div class="topbar">
+  <div class="topbar-left">
+    <span class="topbar-label">字級</span>
+    <button class="tb-btn" data-fs="14">小</button>
+    <button class="tb-btn active" data-fs="17">中</button>
+    <button class="tb-btn" data-fs="20">大</button>
+    <button class="tb-btn" data-fs="23">特大</button>
+  </div>
+</div>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-name">基督教會花蓮靈糧堂</div>
+  <div class="header-issue">課程與活動報名</div>
+</div>
+
+<!-- 分頁切換 -->
+<nav class="switch" role="tablist">
+  <button class="sw-btn active" data-act="tab" data-tab="events">報名活動</button>
+  <button class="sw-btn" data-act="tab" data-tab="mine">我的報名</button>
+</nav>
+
+<main>
+  <section id="view-events"><div class="skeleton"></div><div class="skeleton"></div></section>
+  <section id="view-mine" hidden></section>
+</main>
+
+<div id="sheet" class="sheet" hidden>
+  <div class="scrim" data-act="close"></div>
+  <div class="panel" id="sheet-body" role="dialog" aria-modal="true"></div>
+</div>
+<div id="toast" class="toast" hidden></div>
+
+<script>
+/* ========== 設定 ========== */
+const CONFIG = {
+  LIFF_ID: '請填入報名 LIFF ID',
+  API_URL: '請填入 GAS 網頁應用程式網址（結尾為 /exec）',
+  // 小組選單，可依實際狀況增減
+  GROUPS: ['巴拿巴小組', '盼望小組', '約書亞小組', '嗎哪小組', '愛家小組', '豐盛小組', '以琳小組',
+           'A+小組', '標竿親子小組', '社青小組', '大專小組', '學生小組', '未加入小組']
+};
+const MAX_PEOPLE = 10;
+
+/* ========== 狀態與工具 ========== */
+const state = { idToken: '', profile: { name: '', group: '' }, events: [], mine: null, current: null, people: [] };
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+async function api(action, data) {
+  const res = await fetch(CONFIG.API_URL, {
+    method: 'POST',
+    // 不設定 Content-Type，讓瀏覽器以 text/plain 送出，避免 GAS 不支援的預檢請求
+    body: JSON.stringify(Object.assign({ action: action, idToken: state.idToken }, data || {}))
+  });
+  if (!res.ok) throw new Error('連線失敗，請稍後再試');
+  const j = await res.json();
+  if (!j.ok) throw new Error(j.error || '發生錯誤，請稍後再試');
+  return j;
+}
+
+// 記錄圖文選單點擊（不等待回應，不影響使用）
+function logClick(button, target) {
+  const d = liff.getDecodedIDToken() || {};
+  const body = JSON.stringify({ action: 'log', userId: d.sub || '', name: d.name || '', button: button, target: target });
+  if (!(navigator.sendBeacon && navigator.sendBeacon(CONFIG.API_URL, body))) {
+    fetch(CONFIG.API_URL, { method: 'POST', body: body, keepalive: true }).catch(() => {});
+  }
+}
+
+let toastTimer;
+function toast(msg) {
+  const t = $('#toast');
+  t.textContent = msg; t.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.hidden = true; }, 3200);
+}
+
+function busy(btn, on, label) {
+  if (on) { btn.dataset.label = btn.textContent; btn.textContent = label || '處理中'; btn.disabled = true; }
+  else { btn.textContent = btn.dataset.label || btn.textContent; btn.disabled = false; }
+}
+
+const skeleton = () => '<div class="skeleton"></div><div class="skeleton"></div>';
+const empty = msg => '<div class="empty">' + esc(msg) + '</div>';
+function showError(el, msg, retry) {
+  el.innerHTML = '<div class="error"><p>' + esc(msg) + '</p>' +
+    (retry ? '<button class="btn-line" data-act="' + retry + '">重新載入</button>' : '') + '</div>';
+}
+
+function showSheet() { $('#sheet').hidden = false; document.body.style.overflow = 'hidden'; }
+function hideSheet() { $('#sheet').hidden = true; document.body.style.overflow = ''; }
+
+// 表格列：左欄標題、右欄內容
+function infoRow(label, value, cls) {
+  if (value === '' || value == null) return '';
+  return '<tr><td class="td-label">' + label + '</td><td class="td-left' + (cls ? ' ' + cls : '') + '">' + esc(value) + '</td></tr>';
+}
+function infoTable(rows) {
+  return rows ? '<table><colgroup><col style="width:30%"><col style="width:70%"></colgroup><tbody>' + rows + '</tbody></table>' : '';
+}
+
+/* ========== 字級（記住上次選擇） ========== */
+function setFont(sz) {
+  document.documentElement.style.setProperty('--fs', sz + 'px');
+  document.querySelectorAll('.tb-btn[data-fs]').forEach(b => b.classList.toggle('active', +b.dataset.fs === sz));
+  try { localStorage.setItem('hllc-fs', sz); } catch (e) { /* 無法儲存時略過 */ }
+}
+document.querySelectorAll('.tb-btn[data-fs]').forEach(b => b.onclick = () => setFont(+b.dataset.fs));
+try { const saved = +localStorage.getItem('hllc-fs'); if ([14, 17, 20, 23].indexOf(saved) >= 0) setFont(saved); } catch (e) { }
+
+/* ========== 啟動 ========== */
+async function main() {
+  try {
+    await liff.init({ liffId: CONFIG.LIFF_ID });
+    if (!liff.isLoggedIn()) { liff.login({ redirectUri: location.href }); return; }
+    state.idToken = liff.getIDToken();
+    if (!state.idToken) throw new Error('無法取得登入資訊，請確認 LIFF 已開啟 openid 權限');
+
+    const q = new URLSearchParams(location.search);
+    if (q.get('src') === 'richmenu') logClick('課程&活動報名', '報名LIFF');
+    if (q.get('tab') === 'mine') switchTab('mine');
+    await loadEvents();
+  } catch (e) {
+    showError($('#view-events'), e.message);
+  }
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.sw-btn').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  $('#view-events').hidden = name !== 'events';
+  $('#view-mine').hidden = name !== 'mine';
+  if (name === 'mine' && state.mine === null && state.idToken) loadMine();
+}
+
+/* ========== 報名活動 ========== */
+async function loadEvents(silent) {
+  const el = $('#view-events');
+  if (!silent) el.innerHTML = skeleton();
+  try {
+    const r = await api('events');
+    state.events = r.events;
+    state.profile = r.profile || state.profile;
+    renderEvents();
+  } catch (e) {
+    if (!silent) showError(el, e.message, 'reload-events');
+  }
+}
+
+function seatText(ev) {
+  if (ev.remaining === null) return '不限';
+  return ev.remaining === 0 ? '已額滿' : '尚餘 ' + ev.remaining + ' 位';
+}
+
+function renderEvents() {
+  const el = $('#view-events');
+  if (!state.events.length) { el.innerHTML = empty('目前沒有開放報名的活動'); return; }
+  el.innerHTML = state.events.map((ev, i) => {
+    const full = ev.remaining === 0;
+    return '<div class="section">' +
+      '<div class="sec-hd"><div class="sec-title">' + esc(ev.name) + '</div></div>' +
+      '<div class="sec-body">' +
+      (ev.image ? '<img class="cover" src="' + esc(ev.image) + '" alt="' + esc(ev.name) + '" loading="lazy" onerror="this.remove()">' : '') +
+      (ev.desc ? '<p class="desc">' + esc(ev.desc) + '</p>' : '') +
+      infoTable(infoRow('日期', ev.date) + infoRow('時間地點', ev.place) + infoRow('報名截止', ev.deadline) +
+        infoRow('名額', seatText(ev), full ? 'status-off' : '')) +
+      '<div class="cta"><button class="btn-main" data-act="open" data-i="' + i + '"' + (full ? ' disabled' : '') + '>' +
+      (full ? '已額滿' : '線上報名') + '</button></div>' +
+      '</div></div>';
+  }).join('');
+}
+
+// 額外欄位格式：「住宿需求:需要|不需要;備註」，有選項為下拉選單，否則為文字輸入
+function parseFields(str) {
+  return String(str || '').split(/[;；]/).map(s => s.trim()).filter(Boolean).map(s => {
+    const idx = s.search(/[:：]/);
+    if (idx < 0) return { label: s, options: [] };
+    return { label: s.slice(0, idx).trim(), options: s.slice(idx + 1).split('|').map(o => o.trim()).filter(Boolean) };
+  });
+}
+
+function fieldHtml(f) {
+  const attr = ' data-extra="' + esc(f.label) + '"';
+  const control = f.options.length
+    ? '<select' + attr + '><option value="">請選擇</option>' + f.options.map(o => '<option>' + esc(o) + '</option>').join('') + '</select>'
+    : '<input' + attr + ' maxlength="200">';
+  return '<label>' + esc(f.label) + control + '</label>';
+}
+
+function groupOptions(selected) {
+  const list = CONFIG.GROUPS.slice();
+  if (selected && list.indexOf(selected) < 0) list.push(selected);
+  return '<option value="">請選擇小組</option>' +
+    list.map(g => '<option' + (g === selected ? ' selected' : '') + '>' + esc(g) + '</option>').join('');
+}
+
+function panelHead(title, sub) {
+  return '<div class="panel-hd"><div class="t">' + esc(title) + '</div>' + (sub ? '<div class="s">' + esc(sub) + '</div>' : '') + '</div>';
+}
+
+function openForm(i) {
+  const ev = state.events[i];
+  const fields = parseFields(ev.fields);
+  state.current = ev;
+  state.people = [{ name: state.profile.name || '', group: state.profile.group || '' }];
+  $('#sheet-body').innerHTML =
+    panelHead(ev.name, [ev.date, ev.place].filter(Boolean).join('　')) +
+    '<div class="panel-body">' +
+    '<p class="sub-hd">參加者</p>' +
+    '<div id="people"></div>' +
+    '<button class="btn-line" data-act="add-person">新增一位參加者（代家人或組員報名）</button>' +
+    (fields.length ? '<p class="sub-hd">其他資訊</p>' + fields.map(fieldHtml).join('') : '') +
+    '<p class="hint">報名完成後，官方 LINE 會傳送確認通知給你。</p>' +
+    '<div class="row2"><button class="btn-line" data-act="close">返回</button>' +
+    '<button class="btn-main" data-act="submit">送出報名</button></div>' +
+    '</div>';
+  renderPeople();
+  showSheet();
+}
+
+function renderPeople() {
+  $('#people').innerHTML = state.people.map((p, k) =>
+    '<div class="p-card"><div class="p-card-hd"><span>參加者 ' + (k + 1) + '</span>' +
+    (k > 0 ? '<button class="link" data-act="remove-person" data-k="' + k + '">移除</button>' : '') + '</div>' +
+    '<label>姓名<input data-k="' + k + '" data-f="name" value="' + esc(p.name) + '" maxlength="20" placeholder="請填寫真實姓名" autocomplete="name"></label>' +
+    '<label>小組<select data-k="' + k + '" data-f="group">' + groupOptions(p.group) + '</select></label>' +
+    '</div>').join('');
+}
+
+async function submitForm(btn) {
+  const people = state.people.map(p => ({ name: p.name.trim(), group: p.group })).filter(p => p.name);
+  if (!people.length) return toast('請填寫參加者姓名');
+  if (people.length !== state.people.length) return toast('有參加者尚未填寫姓名');
+  if (people.some(p => !p.group)) return toast('請選擇每位參加者的小組');
+
+  const extra = {};
+  document.querySelectorAll('[data-extra]').forEach(x => { extra[x.dataset.extra] = x.value.trim(); });
+
+  busy(btn, true, '送出中');
+  try {
+    const r = await api('register', { eventId: state.current.id, participants: people, extra: extra });
+    showDone(people.map(p => p.name), r.pushed);
+    state.mine = null;           // 下次切到「我的報名」時重新載入
+    loadEvents(true);            // 更新剩餘名額
+  } catch (e) {
+    toast(e.message);
+    busy(btn, false);
+  }
+}
+
+function showDone(names, pushed) {
+  $('#sheet-body').innerHTML =
+    panelHead('報名完成') +
+    '<div class="panel-body"><div class="done"><div class="mark">✓</div>' +
+    '<p><b>' + esc(state.current.name) + '</b></p>' +
+    '<p>參加者：' + esc(names.join('、')) + '</p>' +
+    '<p class="hint">' + (pushed
+      ? '確認通知已傳送到官方 LINE 聊天室。'
+      : '確認通知暫時無法送出，但報名已完成，可在「我的報名」查看。') + '</p></div>' +
+    '<div class="row2"><button class="btn-line" data-act="close">關閉</button>' +
+    '<button class="btn-main" data-act="goto-mine">我的報名</button></div></div>';
+}
+
+/* ========== 我的報名 ========== */
+async function loadMine() {
+  const el = $('#view-mine');
+  el.innerHTML = skeleton();
+  try {
+    const r = await api('myRegs');
+    state.mine = r.list;
+    renderMine();
+  } catch (e) {
+    showError(el, e.message, 'reload-mine');
+  }
+}
+
+function renderMine() {
+  const el = $('#view-mine');
+  if (!state.mine.length) { el.innerHTML = empty('目前沒有報名紀錄'); return; }
+  el.innerHTML = state.mine.map(r => {
+    const active = r.status === '已報名';
+    return '<div class="section' + (active ? '' : ' muted') + '">' +
+      '<div class="sec-hd"><div class="sec-title">' + esc(r.eventName) + '</div></div>' +
+      '<div class="sec-body">' +
+      infoTable(
+        infoRow('狀態', r.status, active ? 'status-on' : 'status-off') +
+        infoRow('參加者', r.name + (r.group ? '（' + r.group + '）' : '')) +
+        infoRow('日期', r.date) + infoRow('時間地點', r.place) + infoRow('報名時間', r.createdAt)) +
+      (r.cancellable ? '<button class="btn-line" data-act="ask-cancel" data-id="' + esc(r.id) + '">取消報名</button>' : '') +
+      '</div></div>';
+  }).join('');
+}
+
+function askCancel(id) {
+  const r = state.mine.find(x => x.id === id);
+  if (!r) return;
+  $('#sheet-body').innerHTML =
+    panelHead('確定取消報名？') +
+    '<div class="panel-body"><div class="confirm-box">' +
+    '<p style="text-align:center"><b>' + esc(r.eventName) + '</b></p>' +
+    '<p style="text-align:center">參加者：' + esc(r.name) + '</p></div>' +
+    '<div class="row2"><button class="btn-line" data-act="close">保留報名</button>' +
+    '<button class="btn-main btn-danger" data-act="do-cancel" data-id="' + esc(id) + '">確定取消</button></div></div>';
+  showSheet();
+}
+
+async function doCancel(btn) {
+  busy(btn, true, '取消中');
+  try {
+    const r = await api('cancel', { regId: btn.dataset.id });
+    hideSheet();
+    toast(r.pushed ? '已取消報名，官方 LINE 已傳送通知' : '已取消報名');
+    loadMine();
+    loadEvents(true);
+  } catch (e) {
+    toast(e.message);
+    busy(btn, false);
+  }
+}
+
+/* ========== 事件處理 ========== */
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-act]');
+  if (!t) return;
+  const act = t.dataset.act;
+  if (act === 'tab') switchTab(t.dataset.tab);
+  else if (act === 'open') openForm(+t.dataset.i);
+  else if (act === 'close') hideSheet();
+  else if (act === 'add-person') {
+    if (state.people.length >= MAX_PEOPLE) return toast('一次最多報名 ' + MAX_PEOPLE + ' 位');
+    state.people.push({ name: '', group: state.people[state.people.length - 1].group });
+    renderPeople();
+  }
+  else if (act === 'remove-person') { state.people.splice(+t.dataset.k, 1); renderPeople(); }
+  else if (act === 'submit') submitForm(t);
+  else if (act === 'goto-mine') { hideSheet(); switchTab('mine'); }
+  else if (act === 'ask-cancel') askCancel(t.dataset.id);
+  else if (act === 'do-cancel') doCancel(t);
+  else if (act === 'reload-events') loadEvents();
+  else if (act === 'reload-mine') loadMine();
+});
+
+// 參加者欄位即時寫回 state，重新繪製時不會遺失已填內容
+['input', 'change'].forEach(type => document.addEventListener(type, e => {
+  const t = e.target;
+  if (t.dataset && t.dataset.f && t.dataset.k !== undefined) state.people[+t.dataset.k][t.dataset.f] = t.value;
+}));
+
+main();
+</script>
+</body>
+</html>
