@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>開啟中</title>
+<script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+  body {
+    margin: 0; min-height: 100vh; display: grid; place-items: center;
+    font: 17px/1.8 "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+    color: #2C2C2A; background: #F4F7FA; text-align: center; padding: 16px;
+  }
+</style>
+</head>
+<body>
+<p id="msg">正在開啟⋯</p>
+<script>
+/*
+ * 圖文選單按鈕轉址頁：先記錄是哪一個按鈕，再導向目的地
+ * 圖文選單的網址動作設為：https://liff.line.me/{GO_LIFF_ID}?b=按鈕代碼
+ */
+const CONFIG = {
+  LIFF_ID: '請填入轉址 LIFF ID',
+  API_URL: '請填入 GAS 網頁應用程式網址（結尾為 /exec）'
+};
+
+// 按鈕白名單：只會導向這裡列出的網址，避免被利用成任意轉址
+// external: true 表示用手機的外部瀏覽器開啟（適合金流、需要登入的網站）
+const BUTTONS = {
+  bulletin: { name: '電子週報', url: '請填入電子週報網址' },
+  offering: { name: '線上奉獻', url: '請填入奉獻網址', external: true },
+  serve:    { name: '服事召募', url: '請填入服事召募網址' },
+  devotion: { name: '蔡俊杰牧師靈修心得文章', url: '請填入靈修文章網址' }
+};
+
+// LIFF 初始化前，參數可能暫存在 liff.state 裡
+function buttonKey() {
+  const q = new URLSearchParams(location.search);
+  if (q.get('b')) return q.get('b');
+  const st = q.get('liff.state') || '';
+  return new URLSearchParams(st.split('?')[1] || '').get('b');
+}
+
+function log(btn) {
+  const d = (liff.isLoggedIn() && liff.getDecodedIDToken()) || {};
+  const body = JSON.stringify({ action: 'log', userId: d.sub || '', name: d.name || '', button: btn.name, target: btn.url });
+  if (!(navigator.sendBeacon && navigator.sendBeacon(CONFIG.API_URL, body))) {
+    fetch(CONFIG.API_URL, { method: 'POST', body: body, keepalive: true }).catch(() => {});
+  }
+}
+
+(async () => {
+  let inited = false;
+  try {
+    await liff.init({ liffId: CONFIG.LIFF_ID });
+    inited = true;
+  } catch (e) {
+    console.error(e); // 初始化失敗也照常轉址，不讓會友卡在這一頁
+  }
+
+  const btn = BUTTONS[buttonKey()];
+  if (!btn || !/^https:\/\//.test(btn.url)) {
+    document.getElementById('msg').textContent = '找不到這個按鈕的設定，請通知教會同工';
+    return;
+  }
+
+  if (inited) { try { log(btn); } catch (e) { console.error(e); } }
+
+  // 稍等讓記錄送出，再前往目的地
+  setTimeout(() => {
+    if (inited && btn.external && liff.isInClient()) {
+      liff.openWindow({ url: btn.url, external: true });
+      liff.closeWindow();
+    } else {
+      location.replace(btn.url);
+    }
+  }, 150);
+})();
+</script>
+</body>
+</html>
