@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>敬拜同工查詢｜花蓮靈糧堂</title>
+<!-- 提早建立連線，縮短第一次取資料的時間 -->
+<link rel="preconnect" href="https://script.google.com" crossorigin>
+<link rel="preconnect" href="https://script.googleusercontent.com" crossorigin>
+<link rel="preconnect" href="https://static.line-scdn.net">
+<link rel="preconnect" href="https://i.ytimg.com">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -259,20 +264,57 @@ function defaultDate(list) {
 const shortLabel = (l) => (l || '').replace('教會禱告會', '禱告會').replace('宣教禱告會', '宣教禱告').replace('跨年禱告會', '跨年').slice(0, 5);
 
 /* ═════════════ 資料 ═════════════ */
-async function load() {
-  try {
-    let data = window.__WORSHIP_MOCK__;
-    if (!data) {
-      const res = await fetch(API_URL);
-      data = await res.json();
-    }
-    if (data.error) throw new Error(data.error);
-    S.data = data;
+/**
+ * 載入策略（先顯示、後更新）
+ * 1. 有上次存在手機的資料 → 立即顯示（不到 1 秒）
+ * 2. 同時向 GAS 取最新資料 → 內容有變才重新繪製
+ */
+const STORE_KEY = 'wt_data_v1';
+function readStore() { try { return JSON.parse(localStorage.getItem(STORE_KEY) || 'null'); } catch (e) { return null; } }
+function writeStore(d) { try { localStorage.setItem(STORE_KEY, JSON.stringify(d)); } catch (e) {} }
+
+function fetchFresh() {
+  if (window.__WORSHIP_MOCK__) return Promise.resolve(window.__WORSHIP_MOCK__);
+  return fetch(API_URL).then(r => r.json()).then(d => { if (d.error) throw new Error(d.error); return d; });
+}
+
+async function load(freshPromise) {
+  const cached = readStore();
+  if (cached && cached.sites) {
+    S.data = cached;
     initFromURL();
     render();
-  } catch (e) {
-    $('#main').innerHTML = `<div class="card err"><div>資料載入失敗</div><div class="src">${esc(e.message)}</div><button onclick="location.reload()">重新載入</button></div>`;
   }
+  try {
+    const fresh = await freshPromise;
+    writeStore(fresh);
+    if (!S.data) {                              // 第一次開啟，沒有本機資料
+      S.data = fresh; initFromURL(); render();
+    } else if (fresh.ver !== S.data.ver || !fresh.ver) {
+      applyFresh(fresh);
+    } else {
+      S.data.updated = fresh.updated;
+    }
+  } catch (e) {
+    if (!S.data) {
+      $('#main').innerHTML = `<div class="card err"><div>資料載入失敗</div><div class="src">${esc(e.message)}</div><button onclick="location.reload()">重新載入</button></div>`;
+    } else {
+      toast('目前顯示上次的資料，網路恢復後會自動更新');
+    }
+  }
+}
+
+/** 新資料到達：沒在播放或操作時直接更新畫面；否則先存著，切換場次時套用 */
+function applyFresh(fresh) {
+  S.data = fresh;
+  const list = S.data.sites[S.site] || [];
+  if (!list.some(s => s.date === S.date)) S.date = defaultDate(list);
+  const busy = !$('#viewer').hidden || !$('#report').hidden || !!PL.player || Object.keys(S.players).length > 0
+    || !!document.querySelector('.lyrics:not([hidden])');
+  if (busy) { toast('資料已更新，切換場次後套用'); return; }
+  const y = window.scrollY;
+  render();
+  window.scrollTo(0, y);
 }
 
 function initFromURL() {
@@ -284,7 +326,9 @@ function initFromURL() {
   S.date = list.some(s => s.date === d) ? d : defaultDate(list);
 }
 
+let urlReady = !LIFF_ID;                         // LIFF 初始化完成前不改網址，避免影響登入轉址
 function syncURL() {
+  if (!urlReady || !S.data) return;
   const key = Object.keys(SITE_PARAM).find(k => SITE_PARAM[k] === S.site);
   const p = new URLSearchParams({ site: key, date: S.date || '' });
   history.replaceState(null, '', location.pathname + '?' + p.toString());
@@ -818,7 +862,11 @@ function initLiff() {
     setTimeout(resolve, 5000);                       // 最多等 5 秒，LINE 異常時頁面仍可使用
   });
 }
-initLiff().then(load);
+// 三件事同時進行：取資料、LIFF 初始化、顯示本機資料
+const freshPromise = fetchFresh();
+freshPromise.catch(() => {});
+load(freshPromise);
+initLiff().then(() => { urlReady = true; syncURL(); });
 </script>
 </body>
 </html>
