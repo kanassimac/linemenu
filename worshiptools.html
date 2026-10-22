@@ -31,7 +31,7 @@
   .tab { flex: 1; padding: 10px 0 9px; border-radius: 12px 12px 0 0; font-size: 17px; font-weight: 700; letter-spacing: .1em;
          color: rgba(255,255,255,.9); background: rgba(255,255,255,.16); }
   .tab.on { background: var(--white); color: var(--blue); }
-  .dates { display: flex; gap: 8px; overflow-x: auto; padding: 12px 16px; scrollbar-width: none; scroll-behavior: smooth; }
+  .dates { display: flex; gap: 8px; overflow-x: auto; padding: 12px 16px; scrollbar-width: none; }
   .dates::-webkit-scrollbar { display: none; }
   .chip { position: relative; flex: 0 0 auto; min-width: 66px; padding: 5px 10px 6px; border-radius: 12px; text-align: center;
           background: var(--gray-1); border: 1.5px solid var(--gray-2); }
@@ -288,7 +288,7 @@ const ymdOf = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, 
 function dateRange(kind) {
   const from = new Date(), to = new Date();
   if (kind === 'me') from.setDate(from.getDate() - 7);
-  else from.setMonth(from.getMonth() - 1);
+  else { from.setMonth(from.getMonth() - 1); from.setDate(from.getDate() + 1); }   // 「一個月內」不含剛好一個月前那天
   to.setMonth(to.getMonth() + 2);
   return [ymdOf(from), ymdOf(to)];
 }
@@ -373,12 +373,20 @@ function renderChips() {
     const lbl = isSunday(s.date) && s.label === '主日' ? '主日' : `${shortLabel(s.label)}（${WD[toDate(s.date).getDay()]}）`;
     return `<button class="${cls}" data-date="${s.date}"><span class="d">${md(s.date)}</span><span class="l">${esc(lbl)}</span></button>`;
   }).join('');
-  const on = $('.chip.on', box);
-  if (on) {
-    box.style.scrollBehavior = 'auto';
-    box.scrollLeft = on.offsetLeft - (box.clientWidth - on.offsetWidth) / 2;
-    box.style.scrollBehavior = '';
-  }
+  centerChip();
+}
+
+/** 把目前選取的日期捲到膠囊列中間（等版面排好再捲，iPhone 才會正確） */
+function centerChip() {
+  const go = () => {
+    const box = $('#dates'), on = $('.chip.on', box);
+    if (!on || box.hidden) return;
+    const b = box.getBoundingClientRect(), c = on.getBoundingClientRect();
+    box.scrollLeft += (c.left + c.width / 2) - (b.left + b.width / 2);
+  };
+  go();
+  requestAnimationFrame(go);
+  setTimeout(go, 120);
 }
 
 const currentService = () => (S.data.sites[S.site] || []).find(s => s.date === S.date);
