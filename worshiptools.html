@@ -83,10 +83,15 @@
                 background: linear-gradient(transparent, rgba(0,0,0,.65)); }
   .cover a { color: #fff; font-weight: 700; padding: 7px 14px; border-radius: 8px; background: rgba(255,255,255,.18); text-decoration: none; }
 
-  .ctrls { display: flex; gap: 8px; margin: 12px 0 4px; }
+  .card.player { overflow: visible; }              /* 讓控制列可以固定在畫面上方 */
+  .ctrls { display: flex; gap: 6px; margin: 4px -16px 0; padding: 8px 16px; position: sticky; top: var(--top-h, 0px); z-index: 20;
+           background: #fff; border-radius: 0 0 12px 12px; }
+  .ctrls.stuck { box-shadow: 0 6px 10px -6px rgba(26,33,48,.18); }
   .btn { height: 46px; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 15px; font-weight: 700; }
   .btn.ic { width: 46px; flex: 0 0 auto; color: var(--white); background: var(--blue); }
-  .btn.mode { width: 56px; flex: 0 0 auto; flex-direction: column; gap: 0; line-height: 1; color: var(--gray-4); background: var(--gray-2); }
+  .btn.nav { width: 38px; flex: 0 0 auto; color: var(--blue); background: var(--blue-lt); }
+  .btn.nav:disabled { opacity: .35; }
+  .btn.mode { width: 48px; flex: 0 0 auto; flex-direction: column; gap: 0; line-height: 1; color: var(--gray-4); background: var(--gray-2); }
   .btn.mode small { font-size: 10px; font-weight: 700; margin-top: 3px; }
   .btn.mode.on { color: var(--white); background: var(--blue); }
   .btn.txt { flex: 1; color: var(--blue); background: var(--blue-lt); }
@@ -96,7 +101,13 @@
   .btn.panel-btn .sep { opacity: .45; font-weight: 400; }
   .btn.panel-btn.on .w { opacity: .55; font-weight: 500; }
   .btn.panel-btn.on .w.act { opacity: 1; font-weight: 800; }
-  .btn.share { width: 46px; flex: 0 0 auto; color: var(--white); background: var(--green); }
+  .btn.share { width: 42px; flex: 0 0 auto; color: var(--white); background: var(--green); }
+  .btn.panel-btn { min-width: 0; padding: 0 4px; white-space: nowrap; }
+  .btn.panel-btn .s { display: none; }
+  @media (max-width: 410px) {                      /* 一般手機寬度：「歌詞／歌譜」改顯示「詞／譜」，避免文字被切掉 */
+    .btn.panel-btn .l { display: none; }
+    .btn.panel-btn .s { display: inline; }
+  }
   .btn.dim { opacity: .4; }
 
   .panel { margin-top: 10px; border-radius: 12px; border: 1px solid var(--gray-2); overflow: hidden; }
@@ -312,6 +323,8 @@ const ICON = {
   one: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${LOOP_PATH}<path d="M11 10.5l1.5-1v5" stroke-width="2"/></svg>`,
   none: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${LOOP_PATH}<path d="M4 4l16 16"/></svg>`,
   share: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18 16c-.8 0-1.5.3-2 .8l-7.3-4.2c.1-.2.1-.4.1-.6s0-.4-.1-.6L16 7.2c.5.5 1.2.8 2 .8 1.7 0 3-1.3 3-3s-1.3-3-3-3-3 1.3-3 3c0 .2 0 .4.1.6L7.8 9.8C7.3 9.3 6.6 9 5.8 9c-1.7 0-3 1.3-3 3s1.3 3 3 3c.8 0 1.5-.3 2-.8l7.3 4.2c-.1.2-.1.4-.1.6 0 1.6 1.3 2.9 2.9 2.9s2.9-1.3 2.9-2.9S19.6 16 18 16z"/></svg>',
+  prev: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="2.6" height="14" rx="1"/><path d="M19 5.8v12.4a.8.8 0 0 1-1.2.7L9 12.7a.8.8 0 0 1 0-1.4l8.8-6.2a.8.8 0 0 1 1.2.7z"/></svg>',
+  next: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="16.4" y="5" width="2.6" height="14" rx="1"/><path d="M5 5.8v12.4a.8.8 0 0 0 1.2.7l8.8-6.2a.8.8 0 0 0 0-1.4L6.2 5.1A.8.8 0 0 0 5 5.8z"/></svg>',
   chev: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>',
   report: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M12 7v4M12 14h.01"/></svg>'
 };
@@ -542,9 +555,11 @@ function playerHTML() {
     <section class="card player" id="player">
       <div class="media" id="media"><div id="ytBox"></div><div class="cover" id="cover"></div></div>
       <div class="ctrls">
+        <button class="btn nav" id="bPrev" aria-label="上一首">${ICON.prev}</button>
         <button class="btn ic" id="bPlay" aria-label="播放或暫停">${ICON.play}</button>
+        <button class="btn nav" id="bNext" aria-label="下一首">${ICON.next}</button>
         <button class="btn mode" id="bMode" aria-label="循環模式"></button>
-        <button class="btn txt panel-btn" id="bPanel" aria-label="顯示歌詞或歌譜"><span class="w" data-w="lyr">歌詞</span><span class="sep">／</span><span class="w" data-w="sheet">歌譜</span></button>
+        <button class="btn txt panel-btn" id="bPanel" aria-label="顯示歌詞或歌譜"><span class="w" data-w="lyr"><span class="l">歌詞</span><span class="s">詞</span></span><span class="sep">／</span><span class="w" data-w="sheet"><span class="l">歌譜</span><span class="s">譜</span></span></button>
         <button class="btn share" id="bShare" aria-label="分享">${ICON.share}</button>
       </div>
       <div class="panel" id="lyrPanel" hidden></div>
@@ -581,6 +596,8 @@ function setSong(i, play) {
   const v = S.view[i];
   renderTracks();
   $('#bPlay').classList.toggle('dim', !v.vid);
+  $('#bPrev').disabled = i === 0;
+  $('#bNext').disabled = i === S.view.length - 1;
   $('#bPanel').classList.toggle('na', !v.lyrics && !v.sheets.length);
   renderPanels();
 
@@ -881,6 +898,40 @@ function cyclePanel() {
   renderPanels();
   if (P.panel === 'none' && !has.lyr && !has.sheet) toast('這首歌沒有歌詞和歌譜');
 }
+
+/** 上一首／下一首：正在播放就接著播新的一首；歌詞、歌譜保持顯示，畫面不捲動 */
+function stepSong(d) {
+  const n = P.cur + d;
+  if (n < 0 || n >= S.view.length) return;
+  let playing = false;
+  try { playing = !!(P.player && P.ready && P.player.getPlayerState() === YT.PlayerState.PLAYING); } catch (e) {}
+  P.auto = false;
+  setSong(n, playing);
+  // 若正在往下閱讀歌詞或歌譜，換歌後捲到新歌的開頭（緊接在固定的控制列下方）
+  const panel = !$('#lyrPanel').hidden ? $('#lyrPanel') : !$('#sheetPanel').hidden ? $('#sheetPanel') : null;
+  const ctrls = $('.ctrls');
+  if (panel && ctrls) {
+    const line = ctrls.getBoundingClientRect().bottom + 8;
+    const top = panel.getBoundingClientRect().top;
+    if (top < line) window.scrollTo({ top: window.scrollY + top - line });
+  }
+}
+
+/* 頂部固定區的高度：讓控制列固定在它下方 */
+function syncTopHeight() { document.documentElement.style.setProperty('--top-h', $('#top').offsetHeight + 'px'); }
+try { new ResizeObserver(syncTopHeight).observe($('#top')); } catch (e) { window.addEventListener('resize', syncTopHeight); }
+syncTopHeight();
+/* 控制列固定在上方時加上陰影，與下方內容區隔 */
+let stuckTick = false;
+window.addEventListener('scroll', () => {
+  if (stuckTick) return;
+  stuckTick = true;
+  requestAnimationFrame(() => {
+    stuckTick = false;
+    const c = $('.ctrls');
+    if (c) c.classList.toggle('stuck', c.getBoundingClientRect().top <= $('#top').offsetHeight + 0.5 && window.scrollY > 0);
+  });
+}, { passive: true });
 
 /** 點清單切歌時，若影片已捲出畫面，捲回播放器頂端 */
 function revealMedia() {
@@ -1291,6 +1342,8 @@ $('#main').addEventListener('click', e => {
     return;
   }
   if (e.target.closest('#bigPlay') || e.target.closest('#bPlay')) return togglePlay();
+  if (e.target.closest('#bPrev')) return stepSong(-1);
+  if (e.target.closest('#bNext')) return stepSong(1);
   if (e.target.closest('#bMode')) {
     P.mode = MODES[(MODES.indexOf(P.mode) + 1) % MODES.length];
     renderMode();
