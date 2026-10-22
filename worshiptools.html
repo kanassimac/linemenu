@@ -132,6 +132,34 @@
   .foot-report { display: block; margin: 4px auto 12px; padding: 10px 18px; border-radius: 10px; font-size: 14px; font-weight: 700;
                  color: var(--gray-4); background: var(--white); border: 1px solid var(--gray-2); }
 
+  /* ── 個人頁籤 ── */
+  .me-head { padding: 18px 16px; }
+  .me-name { font-size: 22px; font-weight: 800; }
+  .me-sub { margin-top: 2px; font-size: 14px; color: var(--gray-4); }
+  .me-sec { margin: 18px 4px 8px; font-size: 13px; font-weight: 800; color: var(--gray-4); letter-spacing: .06em; }
+  .svc { padding: 14px 16px 16px; }
+  .svc.past { opacity: .6; }
+  .svc-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+  .svc-date { font-size: 19px; font-weight: 800; }
+  .site-tag { padding: 1px 9px; border-radius: 9px; font-size: 12px; font-weight: 700; color: var(--blue-dk); background: var(--blue-lt); }
+  .site-tag.xx { color: #0B7A55; background: #E3F6EE; }
+  .svc-label { font-size: 13px; color: var(--gray-4); }
+  .next-tag { margin-left: auto; padding: 1px 9px; border-radius: 9px; font-size: 12px; font-weight: 700; color: #fff; background: var(--orange); }
+  .roles { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .role { padding: 4px 11px; border-radius: 10px; font-size: 15px; font-weight: 800; color: var(--white); background: var(--blue); }
+  .svc .kv { font-size: 14px; }
+  .svc-songs { margin-top: 8px; font-size: 14px; color: var(--black); }
+  .svc-songs b { color: var(--gray-4); font-weight: 600; margin-right: 6px; }
+  .go { width: 100%; margin-top: 12px; height: 42px; border-radius: 10px; font-size: 15px; font-weight: 700; color: var(--blue); background: var(--blue-lt); }
+  .me-state { padding: 28px 18px; text-align: center; }
+  .me-state h3 { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+  .me-state p { font-size: 14px; color: var(--gray-4); margin-bottom: 14px; }
+  .me-state input { width: 100%; max-width: 280px; padding: 10px 12px; margin-bottom: 10px; border-radius: 10px; border: 1.5px solid var(--gray-2);
+                    font: inherit; font-size: 16px; text-align: center; }
+  .me-state .act { display: block; width: 100%; max-width: 280px; margin: 0 auto; height: 46px; border-radius: 12px;
+                   font-size: 16px; font-weight: 800; color: var(--white); background: var(--blue); }
+  .me-state .act:disabled { opacity: .5; }
+
   /* ── 問題回報 ── */
   .mask { position: fixed; inset: 0; z-index: 70; display: flex; align-items: flex-end; justify-content: center; background: rgba(15,20,30,.45); }
   .sheet { width: 100%; max-width: 560px; max-height: 92vh; overflow-y: auto; padding: 18px 16px;
@@ -160,6 +188,7 @@
   <nav class="tabs">
     <button class="tab" data-site="本堂">本堂</button>
     <button class="tab" data-site="新秀">新秀</button>
+    <button class="tab me" data-site="個人">個人</button>
   </nav>
   <div class="dates" id="dates"></div>
 </div>
@@ -203,7 +232,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbxyV_3V66PKFx7n4284C17_
 const LIFF_ID = '2007843015-jGJQsDWB';             // LINE 分享、問題回報傳到官方帳號聊天室
 const SUNDAY_SWITCH_HOUR = 13;                     // 主日當天幾點後切換到下一週
 const OTHER_SWITCH_HOUR = 22;                      // 非主日聚會當天幾點後視為結束
-const SITE_PARAM = { main: '本堂', xinxiu: '新秀' };
+const SITE_PARAM = { main: '本堂', xinxiu: '新秀', me: '個人' };
 
 /* ═════════════ 狀態 ═════════════ */
 const S = { data: null, site: '本堂', date: null, view: [] };
@@ -283,6 +312,7 @@ async function load(freshPromise) {
 /** 新資料到達：沒在播放或操作時才重新繪製，避免畫面突然跳動 */
 function applyFresh(fresh) {
   S.data = fresh;
+  if (S.site === '個人') { renderMe(); return; }
   const list = S.data.sites[S.site] || [];
   if (!list.some(s => s.date === S.date)) S.date = defaultDate(list);
   const busy = !$('#report').hidden || !!P.player || P.panel === 'sheet' || window.scrollY > 200;
@@ -293,8 +323,8 @@ function applyFresh(fresh) {
 function initFromURL() {
   const p = new URLSearchParams(location.search);
   const site = SITE_PARAM[p.get('site')] || p.get('site');
-  if (site === '本堂' || site === '新秀') S.site = site;
-  const list = S.data.sites[S.site] || [];
+  if (site === '本堂' || site === '新秀' || site === '個人') S.site = site;
+  const list = S.data.sites[S.site === '個人' ? '本堂' : S.site] || [];
   const d = p.get('date');
   S.date = list.some(s => s.date === d) ? d : defaultDate(list);
 }
@@ -309,8 +339,10 @@ function syncURL() {
 /* ═════════════ 繪製 ═════════════ */
 function render() {
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.site === S.site));
-  renderChips();
-  renderService();
+  const personal = S.site === '個人';
+  $('#dates').hidden = personal;
+  if (personal) { resetPlayer(); S.view = []; renderMe(); }
+  else { renderChips(); renderService(); }
   syncURL();
 }
 
@@ -810,14 +842,141 @@ function toast(t) {
   toastTimer = setTimeout(() => { el.hidden = true; }, 2600);
 }
 
+/* ═════════════ 個人頁籤 ═════════════
+ * 身分由 GAS 向 LINE 驗證（ID Token），前端無法冒用他人；只回傳本人的服事
+ * 狀態：loading／need-line（需從 LINE 開啟）／unregistered（未申請）／pending（待開通）／ok／error
+ */
+const ME_KEY = 'wt_me_v1';
+const ME = { status: 'loading', name: '', items: [], lineName: '', error: '' };
+(function () { try { const c = JSON.parse(localStorage.getItem(ME_KEY) || 'null'); if (c && c.status === 'ok') Object.assign(ME, c); } catch (e) {} })();
+let liffDone = Promise.resolve();
+let meBusy = false;
+
+async function refreshMe() {
+  if (meBusy) return;
+  meBusy = true;
+  try {
+    await liffDone;
+    if (!liffOK) return setMe({ status: 'need-line' });
+    if (!liff.isLoggedIn()) return setMe({ status: 'need-line' });
+    const idToken = liff.getIDToken();
+    if (!idToken) return setMe({ status: 'error', error: 'LINE 未提供身分資料（LIFF 設定需勾選 openid）' });
+    const j = await postApi({ action: 'me', idToken });
+    if (!j.ok) throw new Error(j.error || '查詢失敗');
+    setMe(j);
+  } catch (err) {
+    if (ME.status === 'ok') toast('無法更新，目前顯示上次的資料');
+    else setMe({ status: 'error', error: err.message });
+  } finally {
+    meBusy = false;
+  }
+}
+
+function postApi(body) {
+  return fetch(API_URL, { method: 'POST', body: JSON.stringify(body) }).then(r => r.text()).then(t => {
+    try { return JSON.parse(t); } catch (e) { throw new Error('伺服器尚未更新或授權'); }
+  });
+}
+
+function setMe(d) {
+  Object.assign(ME, { name: '', items: [], lineName: '', error: '' }, d);
+  try {
+    if (ME.status === 'ok') localStorage.setItem(ME_KEY, JSON.stringify(ME));
+    else localStorage.removeItem(ME_KEY);
+  } catch (e) {}
+  if (S.site === '個人') renderMe();
+}
+
+function renderMe() {
+  const main = $('#main');
+  if (ME.status === 'loading') { main.innerHTML = '<div class="skel"></div><div class="skel" style="height:220px"></div>'; return; }
+  if (ME.status !== 'ok') { main.innerHTML = meStateHTML(); return; }
+
+  const now = new Date();
+  const svc = (it) => (S.data.sites[it.site] || []).find(s => s.date === it.date) || {};
+  const up = ME.items.filter(it => endTime(it) > now);
+  const past = ME.items.filter(it => endTime(it) <= now).reverse();
+  const nextTxt = up.length ? `下次：${md(up[0].date)}（${WD[toDate(up[0].date).getDay()]}）${up[0].site} ${up[0].roles.join('、')}` : '目前沒有排定的服事';
+
+  const card = (it, isNext, isPast) => {
+    const s = svc(it);
+    const songs = (s.songs || []).map(x => ((S.data.songs[x.key] || {}).title || x.name) + (x.type === 'response' ? '（回應）' : ''));
+    const rows = [['團練', s.practice], ['主領', s.leader], ['講員', s.speaker]]
+      .filter(r => r[1]).map(r => `<dt>${r[0]}</dt><dd>${esc(r[1])}</dd>`).join('');
+    return `<section class="card svc ${isPast ? 'past' : ''}">
+      <div class="svc-top">
+        <span class="svc-date">${md(it.date)}（${WD[toDate(it.date).getDay()]}）</span>
+        <span class="site-tag ${it.site === '新秀' ? 'xx' : ''}">${esc(it.site)}</span>
+        <span class="svc-label">${esc(it.label)}</span>
+        ${isNext ? '<span class="next-tag">下次</span>' : ''}
+      </div>
+      <div class="roles">${it.roles.map(r => `<span class="role">${esc(r)}</span>`).join('')}</div>
+      ${rows ? `<dl class="kv">${rows}</dl>` : ''}
+      <div class="svc-songs"><b>歌單</b>${songs.length ? esc(songs.join('、')) : '尚未公布'}</div>
+      <button class="go" data-go="${esc(it.site)}|${it.date}">查看歌單與歌譜</button>
+    </section>`;
+  };
+
+  main.innerHTML = `
+    <section class="card me-head">
+      <div class="me-name">${esc(ME.name)}的服事</div>
+      <div class="me-sub">${esc(nextTxt)}</div>
+    </section>
+    ${up.length ? '<div class="me-sec">接下來</div>' + up.map((it, i) => card(it, i === 0, false)).join('') : ''}
+    ${past.length ? `<div class="me-sec">最近 ${14} 天</div>` + past.map(it => card(it, false, true)).join('') : ''}
+    ${!ME.items.length ? '<div class="card empty">近期沒有排到你的服事。<br>若姓名寫法不同（例如暱稱），請用「問題回報」告訴同工。</div>' : ''}
+    <button class="foot-report" data-report>回報問題或建議</button>`;
+}
+
+function meStateHTML() {
+  const inBrowser = liffOK && !liff.isInClient();
+  switch (ME.status) {
+    case 'need-line':
+      return `<div class="card me-state"><h3>需要 LINE 身分驗證</h3>
+        <p>個人服事只顯示你本人的資料，請從花蓮靈糧堂官方帳號的選單開啟本頁。</p>
+        ${inBrowser ? '<button class="act" data-me="login">使用 LINE 登入</button>' : ''}</div>`;
+    case 'unregistered':
+      return `<div class="card me-state"><h3>尚未開通個人服事</h3>
+        <p>個人頁籤僅開放給服事同工。請填寫你在服事表上的姓名，送出後由同工確認開通。</p>
+        <input id="meName" maxlength="20" placeholder="例如：陽振君" value="">
+        <button class="act" data-me="apply">申請開通</button></div>`;
+    case 'pending':
+      return `<div class="card me-state"><h3>已送出申請</h3>
+        <p>同工確認後就會開通${ME.lineName ? `（LINE 名稱：${esc(ME.lineName)}）` : ''}，開通後回到這裡即可查看。</p>
+        <button class="act" data-me="reload">重新檢查</button></div>`;
+    default:
+      return `<div class="card me-state"><h3>暫時無法查詢</h3><p>${esc(ME.error || '請稍後再試')}</p>
+        <button class="act" data-me="reload">重試</button></div>`;
+  }
+}
+
+async function applyMe(btn) {
+  const name = ($('#meName').value || '').trim();
+  if (!name) { $('#meName').focus(); return; }
+  btn.disabled = true; btn.textContent = '送出中…';
+  try {
+    await liffDone;
+    const j = await postApi({ action: 'apply', idToken: liff.getIDToken(), name });
+    if (!j.ok) throw new Error(j.error || '申請失敗');
+    setMe(j);
+  } catch (err) {
+    btn.disabled = false; btn.textContent = '申請開通';
+    alert('送出失敗：' + err.message);
+  }
+}
+
 /* ═════════════ 事件 ═════════════ */
 document.querySelector('.tabs').addEventListener('click', e => {
   const t = e.target.closest('.tab');
   if (!t || !S.data || t.dataset.site === S.site) return;
   S.site = t.dataset.site;
-  const list = S.data.sites[S.site] || [];
-  if (!list.some(s => s.date === S.date)) S.date = defaultDate(list);   // 同一天就保留，方便兩堂比對
+  if (S.site !== '個人') {
+    const list = S.data.sites[S.site] || [];
+    if (!list.some(s => s.date === S.date)) S.date = defaultDate(list);   // 同一天就保留，方便兩堂比對
+  }
   render();
+  window.scrollTo({ top: 0 });
+  if (S.site === '個人') refreshMe();
 });
 
 $('#dates').addEventListener('click', e => {
@@ -829,7 +988,20 @@ $('#dates').addEventListener('click', e => {
 });
 
 $('#main').addEventListener('click', e => {
-  if (e.target.closest('[data-report]')) return openReport(S.view.length ? P.cur : null);
+  const go = e.target.closest('[data-go]');
+  if (go) {                                         // 從個人頁籤跳到該場次的歌單
+    const [site, date] = go.dataset.go.split('|');
+    S.site = site; S.date = date; render(); window.scrollTo({ top: 0 });
+    return;
+  }
+  const me = e.target.closest('[data-me]');
+  if (me) {
+    if (me.dataset.me === 'login') liff.login({ redirectUri: location.href });
+    else if (me.dataset.me === 'apply') applyMe(me);
+    else { setMe({ status: 'loading' }); refreshMe(); }
+    return;
+  }
+  if (e.target.closest('[data-report]')) return openReport(S.site !== '個人' && S.view.length ? P.cur : null);
   if (e.target.closest('#rosterBtn')) {
     const btn = $('#rosterBtn'), box = $('#roster');
     box.hidden = !box.hidden; btn.classList.toggle('open', !box.hidden);
@@ -878,7 +1050,9 @@ function initLiff() {
 const freshPromise = fetchFresh();
 freshPromise.catch(() => {});
 load(freshPromise);
-initLiff().then(() => { urlReady = true; syncURL(); });
+liffDone = initLiff();
+liffDone.then(() => { urlReady = true; syncURL(); });
+if (new URLSearchParams(location.search).get('site') === 'me') refreshMe();
 </script>
 </body>
 </html>
