@@ -185,8 +185,6 @@
   .hint { margin-bottom: 12px; font-size: 12px; color: var(--gray-4); }
   .submit { width: 100%; height: 48px; border-radius: 12px; font-size: 16px; font-weight: 800; color: var(--white); background: var(--blue); }
   .submit:disabled { opacity: .5; }
-  .back-line { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; max-width: 320px; margin: 0 auto 14px;
-               height: 46px; border-radius: 12px; font-size: 15px; font-weight: 800; color: #fff; background: var(--green); }
   .toast { position: fixed; left: 50%; bottom: max(24px, env(safe-area-inset-bottom)); z-index: 80; transform: translateX(-50%);
            padding: 10px 18px; border-radius: 20px; font-size: 14px; color: var(--white); background: rgba(26,33,48,.92); white-space: nowrap; }
 </style>
@@ -491,7 +489,6 @@ function renderService() {
     </section>`;
   }
   html += `<button class="foot-report" data-report>回報問題或建議</button>`;
-  html += backLineHTML();
   if (S.data.updated) html += `<p class="foot">資料更新：${esc(S.data.updated.replace('T', ' ').slice(0, 16))}</p>`;
   main.innerHTML = html;
 
@@ -831,17 +828,6 @@ async function share(i) {
 /* ═════════════ LINE ═════════════ */
 let liffOK = false;                                    // liff.init 成功後才使用 LINE 功能
 function inLINE() { return liffOK && liff.isInClient(); }
-/** 只在「與官方帳號的一對一聊天室」開啟時，才把回報傳進聊天室，避免誤送到群組 */
-function canSendToOA() {
-  if (!inLINE()) return false;
-  const c = liff.getContext && liff.getContext();
-  return !!c && c.type === 'utou' && (!c.scope || c.scope.indexOf('chat_message.write') > -1);
-}
-
-/** 頁面底部的「回到 LINE 聊天室」：與右上角 X 相同作用，但文字清楚 */
-function backLineHTML() {
-  return inLINE() ? '<button class="back-line" data-back>回到 LINE 聊天室</button>' : '';
-}
 
 /* ═════════════ 問題回報 ═════════════ */
 let rType = '歌詞錯誤';
@@ -851,9 +837,7 @@ function openReport(songIdx) {
   $('#rSong').innerHTML = '<option value="">不限定歌曲</option>' +
     S.view.map((v, i) => `<option value="${i}">${esc(v.title)}${v.type === 'response' ? '（回應）' : ''}</option>`).join('');
   if (songIdx != null) $('#rSong').value = songIdx;
-  $('#rHint').textContent = canSendToOA()
-    ? '送出後，回報會出現在你與官方帳號的聊天室，同工會在那裡回覆你。'
-    : '回報會記錄給教會同工處理。從官方帳號選單開啟本頁，回報才會同步出現在聊天室。';
+  $('#rHint').textContent = '回報會記錄給教會同工處理，謝謝你的協助。';
   $('#rSubmit').disabled = false; $('#rSubmit').textContent = '送出';
   $('#report').hidden = false;
   document.body.style.overflow = 'hidden';
@@ -872,32 +856,15 @@ async function submitReport(e) {
   const btn = $('#rSubmit');
   btn.disabled = true; btn.textContent = '送出中…';
 
-  const text = [
-    '【問題回報｜敬拜同工查詢】',
-    `類型：${rType}`,
-    `場次：${$('#rCtx').textContent}`,
-    song ? `歌曲：${song}` : '',
-    `說明：${content}`
-  ].filter(Boolean).join('\n');
-
-  // 診斷資訊：記在試算表「備註」欄，用來判斷為何沒有傳到聊天室
-  let via = '', name = '', sendErr = '';
-  const c = liffOK && liff.getContext ? liff.getContext() : null;
-  let debug = !liffOK ? 'LINE 未初始化' : !liff.isInClient() ? '非 LINE 內開啟' :
-    `開啟位置=${c ? c.type : '未知'}；權限=${c && c.scope ? c.scope.join(',') : '未知'}`;
-  if (canSendToOA()) {
-    try { await liff.sendMessages([{ type: 'text', text }]); via = 'LINE'; }
-    catch (err) { sendErr = `${err.code || ''} ${err.message || err}`.trim(); debug += `；傳送失敗=${sendErr}`; }
-    try { name = (await liff.getProfile()).displayName; } catch (err) {}
-  } else if (inLINE()) {
-    debug += '；未傳送（不是從官方帳號一對一聊天室開啟，或缺少 chat_message.write 權限）';
-  }
+  // 回報只寫入試算表；附上 LINE 身分憑證，由 GAS 驗證後記下回報者（不需額外授權）
+  let idToken = '';
+  try { if (liffOK && liff.isLoggedIn()) idToken = liff.getIDToken() || ''; } catch (err) {}
   let logged = false, why = '';
   try {
     // text/plain 不會觸發 CORS 預檢，GAS 可以直接接收
     const res = await fetch(API_URL, {
       method: 'POST',
-      body: JSON.stringify({ action: 'report', name, site: S.site, date: s ? s.date : '', song, type: rType, text: content, via: via || '網頁', page: location.href, debug })
+      body: JSON.stringify({ action: 'report', idToken, site: S.site, date: s ? s.date : '', song, type: rType, text: content, via: inLINE() ? 'LINE' : '網頁', page: location.href })
     });
     const raw = await res.text();
     try {
@@ -911,15 +878,14 @@ async function submitReport(e) {
     why = '無法連線到伺服器';
   }
 
-  if (!via && !logged) {
+  if (!logged) {
     btn.disabled = false; btn.textContent = '送出';
     alert('送出失敗：' + why + '\n請稍後再試，或直接在 LINE 告訴同工');
     return;
   }
   $('#rText').value = '';
   closeReport();
-  if (sendErr) alert('回報已記錄，但沒有傳到聊天室。\n原因：' + sendErr);
-  else toast(via ? '已送出，回報已傳到官方帳號' : '已送出，謝謝你的回報');
+  toast('已送出，謝謝你的回報');
 }
 
 let toastTimer = 0;
@@ -1015,7 +981,7 @@ function renderMe() {
     ${up.length ? '<div class="me-sec">接下來</div>' + up.map((it, i) => card(it, i === 0, false)).join('') : ''}
     ${past.length ? `<div class="me-sec">最近 7 天</div>` + past.map(it => card(it, false, true)).join('') : ''}
     ${!shown.length ? '<div class="card empty">近期沒有排到你的服事。<br>若姓名寫法不同（例如暱稱），請用「問題回報」告訴同工。</div>' : ''}
-    <button class="foot-report" data-report>回報問題或建議</button>${backLineHTML()}`;
+    <button class="foot-report" data-report>回報問題或建議</button>`;
 }
 
 function meStateHTML() {
@@ -1084,7 +1050,6 @@ $('#main').addEventListener('click', e => {
     S.site = site; S.date = date; render(); window.scrollTo({ top: 0 });
     return;
   }
-  if (e.target.closest('[data-back]')) { liff.closeWindow(); return; }
   const me = e.target.closest('[data-me]');
   if (me) {
     if (me.dataset.me === 'login') liff.login({ redirectUri: location.href });
