@@ -109,6 +109,12 @@
   .lyr-body .sec { display: inline-block; margin: 14px 0 2px; padding: 0 8px; border-radius: 6px; font-size: calc(12px * var(--fz)); font-weight: 700;
                    line-height: 20px; color: var(--gray-4); background: var(--gray-1); letter-spacing: .04em; }
   .lyr-body .gap { height: 10px; }
+  .keytabs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--gray-2); background: #fff; }
+  .kchip { position: relative; min-width: 48px; height: 34px; padding: 0 12px; border-radius: 17px; font-size: 15px; font-weight: 800;
+           color: var(--black); background: var(--gray-1); border: 1.5px solid var(--gray-2); }
+  .kchip.on { color: #fff; background: var(--blue); border-color: var(--blue); }
+  .kchip .lead { margin-left: 4px; padding: 0 5px; border-radius: 6px; font-size: 10px; font-weight: 800; color: #fff; background: var(--orange); vertical-align: 2px; }
+  .keytabs .miss { font-size: 12px; color: var(--gray-4); }
   .sheet-pages { background: #fff; }
   .sheet-pages img { display: block; width: 100%; height: auto; border-bottom: 1px solid var(--gray-2); }
   .sheet-pages img:last-child { border-bottom: 0; }
@@ -122,6 +128,7 @@
   .tracks .t { flex: 1; min-width: 0; font-size: calc(19px * var(--fz)); font-weight: 700; line-height: 1.35; }
   .tracks .resp { margin-left: 4px; font-size: 13px; font-weight: 700; color: var(--orange); }
   .tracks .key { flex: 0 0 auto; padding: 1px 8px; border-radius: 8px; font-size: 12px; font-weight: 700; color: var(--white); background: var(--black); }
+  .tracks .key.miss { color: var(--gray-4); background: var(--gray-2); }   /* 有標調性的譜，但沒有主領這個調 */
   .tracks .note { flex: 0 0 auto; font-size: 12px; font-weight: 600; color: var(--gray-3); }
   .tracks .note a { color: var(--orange); text-decoration: none; }
   .tracks li.cur .no { color: var(--white); background: var(--blue); }
@@ -447,6 +454,7 @@ function renderService() {
       type: it.type, name: it.name,
       title: info.title || it.name, source: info.source || '',
       url, vid: ytId(url), lyrics: info.lyrics || '', sheet: info.sheet || null,
+      sheets: info.sheets || (info.sheet ? [{ key: '', driveId: info.sheet.driveId, url: info.sheet.url }] : []),
       key: keyFor(info, s.leader)
     };
   });
@@ -507,7 +515,7 @@ function renderTracks() {
     return `<li class="${i === P.cur ? 'cur' : ''}" data-i="${i}">
       <span class="no">${i + 1}</span>
       <span class="t">${esc(v.title)}${v.type === 'response' ? '<span class="resp">回應</span>' : ''}</span>
-      ${note}${v.key ? `<span class="key">${esc(v.key)}</span>` : ''}
+      ${note}${v.key ? `<span class="key ${leadSheetMissing(v) ? 'miss' : ''}" ${leadSheetMissing(v) ? 'title="沒有這個調的譜"' : ''}>${esc(v.key)}</span>` : ''}
     </li>`;
   }).join('');
 }
@@ -526,7 +534,7 @@ function setSong(i, play) {
   const v = S.view[i];
   renderTracks();
   $('#bPlay').classList.toggle('dim', !v.vid);
-  $('#bPanel').classList.toggle('na', !v.lyrics && !v.sheet);
+  $('#bPanel').classList.toggle('na', !v.lyrics && !v.sheets.length);
   renderPanels();
 
   if (!v.vid) {
@@ -662,20 +670,50 @@ function renderPanels() {
 
   sp.hidden = P.panel !== 'sheet';
   if (P.panel === 'sheet') {
-    const sh = v.sheet;
+    const sh = curSheet(v);
     const open = sh && sh.url ? `<a href="${esc(sh.url)}" target="_blank" rel="noopener">開啟原檔</a>` : '';
     const body = sh && sh.driveId
       ? '<div class="sheet-pages" id="sheetPages"><div class="panel-empty">歌譜載入中…</div></div>'
       : `<div class="panel-empty">${sh ? '這份歌譜請點「開啟原檔」查看' : '這首歌的歌譜尚未上傳'}</div>`;
-    const prev = sp.dataset.song;
-    if (prev !== String(P.cur) || !sp.innerHTML) {  // 同一首不重新載入，避免歌譜閃爍
-      sp.innerHTML = `<div class="panel-head"><span>歌譜｜${esc(v.title)}${v.key ? `（${esc(v.key)} 調）` : ''}</span>${open}</div>${body}`;
-      sp.dataset.song = String(P.cur);
+    const sig = `${P.cur}|${sh ? sh.driveId : ''}`;
+    if (sp.dataset.song !== sig || !sp.innerHTML) {  // 同一份不重新載入，避免歌譜閃爍
+      const label = sh ? (sh.key ? `（${esc(sh.key)} 調）` : (v.sheets.length > 1 ? '（原版）' : '')) : '';
+      sp.innerHTML = `<div class="panel-head"><span>歌譜｜${esc(v.title)}${label}</span>${open}</div>${keyTabsHTML(v, sh)}${body}`;
+      sp.dataset.song = sig;
       if (sh && sh.driveId) loadSheet(P.cur);
     }
   } else {
     sp.innerHTML = ''; sp.dataset.song = '';
   }
+}
+
+/* ═════════════ 歌譜的不同調性 ═════════════
+ * 檔名「歌名+出處-調.pdf」由 GAS 整理成 v.sheets = [原版, 各調…]
+ * 預設顯示原版；選過的調性在本次開啟期間記住（以歌名區分）
+ */
+const SHEET_SEL = {};                                 // 歌名 → 選擇的檔案 ID
+const KEY_SEMI = { C: 0, 'B#': 0, 'C#': 1, Db: 1, D: 2, 'D#': 3, Eb: 3, E: 4, Fb: 4, F: 5, 'E#': 5, 'F#': 6, Gb: 6, G: 7, 'G#': 8, Ab: 8, A: 9, 'A#': 10, Bb: 10, B: 11, Cb: 11 };
+/** 調名比對：Bb 與 A#、Db 與 C# 視為同一個調；小調需一致 */
+function keyId(k) {
+  const m = String(k || '').trim().replace('♯', '#').replace('♭', 'b').match(/^([A-Ga-g][#b]?)(m?)/);
+  if (!m) return '';
+  const root = m[1][0].toUpperCase() + m[1].slice(1);
+  return root in KEY_SEMI ? KEY_SEMI[root] + m[2] : '';
+}
+const sameKey = (a, b) => !!keyId(a) && keyId(a) === keyId(b);
+function curSheet(v) {
+  const sel = SHEET_SEL[v.name];
+  return v.sheets.find(x => x.driveId === sel) || v.sheets[0] || null;
+}
+/** 有標調性的譜，但沒有主領這個調 */
+function leadSheetMissing(v) {
+  const keyed = v.sheets.filter(x => x.key);
+  return !!v.key && keyed.length > 0 && !keyed.some(x => sameKey(x.key, v.key));
+}
+function keyTabsHTML(v, sh) {
+  if (v.sheets.length < 2) return '';
+  const chips = v.sheets.map(x => `<button class="kchip ${sh && x.driveId === sh.driveId ? 'on' : ''}" data-sv="${esc(x.driveId)}">${x.key ? esc(x.key) : '原版'}${x.key && sameKey(x.key, v.key) ? '<span class="lead">主領</span>' : ''}</button>`).join('');
+  return `<div class="keytabs">${chips}${leadSheetMissing(v) ? `<span class="miss">沒有 ${esc(v.key)} 調的譜</span>` : ''}</div>`;
 }
 
 /* ═════════════ 歌譜繪製 ═════════════
@@ -699,9 +737,9 @@ function loadPdfJs() {
 }
 
 async function loadSheet(i) {
-  const v = S.view[i], id = v.sheet.driveId, tk = ++sheetToken;
+  const v = S.view[i], id = curSheet(v).driveId, tk = ++sheetToken;
   const box = () => $('#sheetPages');
-  const alive = () => tk === sheetToken && P.panel === 'sheet' && P.cur === i && !!box();
+  const alive = () => tk === sheetToken && P.panel === 'sheet' && P.cur === i && curSheet(S.view[i]).driveId === id && !!box();
   const show = (pages) => { if (alive()) box().innerHTML = pages.map((u, k) => `<img src="${u}" alt="第 ${k + 1} 頁">`).join(''); };
   try {
     if (SHEET_CACHE[id]) { show(SHEET_CACHE[id]); return; }
@@ -785,7 +823,7 @@ function lyricsPlain(raw) {
 function cyclePanel() {
   const v = S.view[P.cur];
   const order = ['none', 'lyr', 'sheet'];
-  const has = { none: true, lyr: !!v.lyrics, sheet: !!v.sheet };
+  const has = { none: true, lyr: !!v.lyrics, sheet: v.sheets.length > 0 };
   let i = order.indexOf(P.panel);
   for (let step = 0; step < 3; step++) {
     i = (i + 1) % 3;
@@ -1072,6 +1110,9 @@ $('#main').addEventListener('click', e => {
   }
   if (e.target.closest('#bPanel')) { cyclePanel(); return; }
   if (e.target.closest('#bShare')) return share(P.cur);
+  const kc = e.target.closest('[data-sv]');
+  if (kc) { SHEET_SEL[S.view[P.cur].name] = kc.dataset.sv; renderPanels(); return; }
+
   const li = e.target.closest('#tracks li');
   if (li && !e.target.closest('a')) {
     P.auto = false;
