@@ -279,6 +279,23 @@ function defaultDate(list) {
   const pick = up.find(s => isSunday(s.date)) || up[0] || list[list.length - 1];
   return pick ? pick.date : null;
 }
+/**
+ * 顯示範圍
+ * site（本堂、新秀）：過去 1 個月 ～ 未來 2 個月
+ * me（個人）：過去 7 天 ～ 未來 2 個月
+ */
+const ymdOf = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+function dateRange(kind) {
+  const from = new Date(), to = new Date();
+  if (kind === 'me') from.setDate(from.getDate() - 7);
+  else from.setMonth(from.getMonth() - 1);
+  to.setMonth(to.getMonth() + 2);
+  return [ymdOf(from), ymdOf(to)];
+}
+function siteList(site) {
+  const [a, b] = dateRange('site');
+  return (S.data.sites[site] || []).filter(s => s.date >= a && s.date <= b);
+}
 const shortLabel = (l) => (l || '').replace('教會禱告會', '禱告會').replace('宣教禱告會', '宣教禱告').replace('跨年禱告會', '跨年').slice(0, 5);
 
 /* ═════════════ 資料：先顯示本機資料，背景更新 ═════════════ */
@@ -313,7 +330,7 @@ async function load(freshPromise) {
 function applyFresh(fresh) {
   S.data = fresh;
   if (S.site === '個人') { renderMe(); return; }
-  const list = S.data.sites[S.site] || [];
+  const list = siteList(S.site);
   if (!list.some(s => s.date === S.date)) S.date = defaultDate(list);
   const busy = !$('#report').hidden || !!P.player || P.panel === 'sheet' || window.scrollY > 200;
   if (busy) { toast('資料已更新，切換場次後套用'); return; }
@@ -324,7 +341,7 @@ function initFromURL() {
   const p = new URLSearchParams(location.search);
   const site = SITE_PARAM[p.get('site')] || p.get('site');
   if (site === '本堂' || site === '新秀' || site === '個人') S.site = site;
-  const list = S.data.sites[S.site === '個人' ? '本堂' : S.site] || [];
+  const list = siteList(S.site === '個人' ? '本堂' : S.site);
   const d = p.get('date');
   S.date = list.some(s => s.date === d) ? d : defaultDate(list);
 }
@@ -347,7 +364,7 @@ function render() {
 }
 
 function renderChips() {
-  const list = S.data.sites[S.site] || [];
+  const list = siteList(S.site);
   const next = defaultDate(list);
   const now = new Date();
   const box = $('#dates');
@@ -913,8 +930,10 @@ function renderMe() {
 
   const now = new Date();
   const svc = (it) => (S.data.sites[it.site] || []).find(s => s.date === it.date) || {};
-  const up = ME.items.filter(it => endTime(it) > now);
-  const past = ME.items.filter(it => endTime(it) <= now).reverse();
+  const [meFrom, meTo] = dateRange('me');
+  const shown = ME.items.filter(it => it.date >= meFrom && it.date <= meTo);
+  const up = shown.filter(it => endTime(it) > now);
+  const past = shown.filter(it => endTime(it) <= now).reverse();
   const nextTxt = up.length ? `下次：${md(up[0].date)}（${WD[toDate(up[0].date).getDay()]}）${up[0].site} ${up[0].roles.join('、')}` : '目前沒有排定的服事';
 
   const card = (it, isNext, isPast) => {
@@ -942,8 +961,8 @@ function renderMe() {
       <div class="me-sub">${esc(nextTxt)}</div>
     </section>
     ${up.length ? '<div class="me-sec">接下來</div>' + up.map((it, i) => card(it, i === 0, false)).join('') : ''}
-    ${past.length ? `<div class="me-sec">最近 ${14} 天</div>` + past.map(it => card(it, false, true)).join('') : ''}
-    ${!ME.items.length ? '<div class="card empty">近期沒有排到你的服事。<br>若姓名寫法不同（例如暱稱），請用「問題回報」告訴同工。</div>' : ''}
+    ${past.length ? `<div class="me-sec">最近 7 天</div>` + past.map(it => card(it, false, true)).join('') : ''}
+    ${!shown.length ? '<div class="card empty">近期沒有排到你的服事。<br>若姓名寫法不同（例如暱稱），請用「問題回報」告訴同工。</div>' : ''}
     <button class="foot-report" data-report>回報問題或建議</button>`;
 }
 
@@ -990,7 +1009,7 @@ document.querySelector('.tabs').addEventListener('click', e => {
   if (!t || !S.data || t.dataset.site === S.site) return;
   S.site = t.dataset.site;
   if (S.site !== '個人') {
-    const list = S.data.sites[S.site] || [];
+    const list = siteList(S.site);
     if (!list.some(s => s.date === S.date)) S.date = defaultDate(list);   // 同一天就保留，方便兩堂比對
   }
   render();
