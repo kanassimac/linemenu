@@ -102,7 +102,9 @@
   .lyr-body .sec { display: inline-block; margin: 14px 0 2px; padding: 0 8px; border-radius: 6px; font-size: 12px; font-weight: 700;
                    line-height: 20px; color: var(--gray-4); background: var(--gray-1); letter-spacing: .04em; }
   .lyr-body .gap { height: 10px; }
-  .sheet-frame { display: block; width: 100%; height: min(78vh, 760px); border: 0; background: #fff; }
+  .sheet-pages { background: #fff; }
+  .sheet-pages img { display: block; width: 100%; height: auto; border-bottom: 1px solid var(--gray-2); }
+  .sheet-pages img:last-child { border-bottom: 0; }
   .panel-empty { padding: 22px 14px; text-align: center; font-size: 14px; color: var(--gray-4); }
 
   .tracks { list-style: none; margin-top: 8px; }
@@ -230,7 +232,6 @@ const ICON = {
 /* ═════════════ 偏好（僅存在本機） ═════════════ */
 function readPref(k) { try { return localStorage.getItem('wt_' + k); } catch (e) { return null; } }
 function writePref(k, v) { try { localStorage.setItem('wt_' + k, v); } catch (e) {} }
-P.mode = MODES.indexOf(readPref('mode')) > -1 ? readPref('mode') : 'none';
 P.panel = readPref('panel') === 'lyr' ? 'lyr' : 'none';      // 只記住歌詞；歌譜較耗流量，不自動開啟
 
 /* ═════════════ 日期工具 ═════════════ */
@@ -370,7 +371,6 @@ function renderService() {
     .filter(r => r[1]).map(r => `<dt>${r[0]}</dt><dd>${esc(r[1])}</dd>`).join('');
   const roster = Object.entries(s.roster || {}).filter(r => r[1])
     .map(r => `<dt>${esc(r[0].replace('禱告&報告', '禱告報告'))}</dt><dd>${esc(r[1])}</dd>`).join('');
-  const rosterOpen = readPref('rosterOpen') === '1';
 
   let html = `
   <section class="card info">
@@ -382,8 +382,8 @@ function renderService() {
       <button class="report-btn" data-report>${ICON.report}問題回報</button>
     </div>
     <dl class="kv">${rows}</dl>
-    ${roster ? `<button class="roster-toggle ${rosterOpen ? 'open' : ''}" id="rosterBtn">服事名單 ${ICON.chev}</button>
-    <dl class="kv roster" id="roster" ${rosterOpen ? '' : 'hidden'}>${roster}</dl>` : ''}
+    ${roster ? `<button class="roster-toggle" id="rosterBtn">服事名單 ${ICON.chev}</button>
+    <dl class="kv roster" id="roster" hidden>${roster}</dl>` : ''}
   </section>`;
 
   if (!S.view.length) {
@@ -579,15 +579,81 @@ function renderPanels() {
     const sh = v.sheet;
     const open = sh && sh.url ? `<a href="${esc(sh.url)}" target="_blank" rel="noopener">開啟原檔</a>` : '';
     const body = sh && sh.driveId
-      ? `<iframe class="sheet-frame" src="https://drive.google.com/file/d/${sh.driveId}/preview" allow="autoplay" loading="lazy"></iframe>`
+      ? '<div class="sheet-pages" id="sheetPages"><div class="panel-empty">歌譜載入中…</div></div>'
       : `<div class="panel-empty">${sh ? '這份歌譜請點「開啟原檔」查看' : '這首歌的歌譜尚未上傳'}</div>`;
     const prev = sp.dataset.song;
     if (prev !== String(P.cur) || !sp.innerHTML) {  // 同一首不重新載入，避免歌譜閃爍
       sp.innerHTML = `<div class="panel-head"><span>歌譜｜${esc(v.title)}${v.key ? `（${esc(v.key)} 調）` : ''}</span>${open}</div>${body}`;
       sp.dataset.song = String(P.cur);
+      if (sh && sh.driveId) loadSheet(P.cur);
     }
   } else {
     sp.innerHTML = ''; sp.dataset.song = '';
+  }
+}
+
+/* ═════════════ 歌譜繪製 ═════════════
+ * 由 GAS 取得檔案內容，PDF 用 pdf.js 在背景執行緒解析後畫成圖片
+ * 不嵌入 Google Drive 預覽（iPhone 上會讓整頁卡住）
+ */
+const PDFJS = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/';
+const SHEET_CACHE = {};                               // driveId → 每頁圖片網址（本次開啟期間重複使用）
+let pdfReady = null, sheetToken = 0;
+
+function loadPdfJs() {
+  if (pdfReady) return pdfReady;
+  pdfReady = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = PDFJS + 'build/pdf.min.js';
+    s.onload = () => { pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS + 'build/pdf.worker.min.js'; resolve(pdfjsLib); };
+    s.onerror = () => { pdfReady = null; reject(new Error('無法載入 PDF 元件')); };
+    document.head.appendChild(s);
+  });
+  return pdfReady;
+}
+
+async function loadSheet(i) {
+  const v = S.view[i], id = v.sheet.driveId, tk = ++sheetToken;
+  const box = () => $('#sheetPages');
+  const alive = () => tk === sheetToken && P.panel === 'sheet' && P.cur === i && !!box();
+  const show = (pages) => { if (alive()) box().innerHTML = pages.map((u, k) => `<img src="${u}" alt="第 ${k + 1} 頁">`).join(''); };
+  try {
+    if (SHEET_CACHE[id]) { show(SHEET_CACHE[id]); return; }
+    const j = await fetch(API_URL + '?sheet=' + encodeURIComponent(id)).then(r => r.json());
+    if (!j.ok) throw new Error(j.error || '讀取失敗');
+    const bin = atob(j.data), bytes = new Uint8Array(bin.length);
+    for (let k = 0; k < bin.length; k++) bytes[k] = bin.charCodeAt(k);
+
+    let pages = [];
+    if (/^image\//.test(j.mime)) {
+      pages = [URL.createObjectURL(new Blob([bytes], { type: j.mime }))];
+    } else {
+      const lib = await loadPdfJs();
+      const pdf = await lib.getDocument({
+        data: bytes, cMapUrl: PDFJS + 'cmaps/', cMapPacked: true, standardFontDataUrl: PDFJS + 'standard_fonts/'
+      }).promise;
+      const cssW = (box() && box().clientWidth) || 360;
+      const target = Math.min(1600, Math.round(cssW * Math.max(3, window.devicePixelRatio || 1)));   // 放大後仍清楚
+      for (let n = 1; n <= pdf.numPages; n++) {
+        const page = await pdf.getPage(n);
+        const vp = page.getViewport({ scale: target / page.getViewport({ scale: 1 }).width });
+        const c = document.createElement('canvas');
+        c.width = Math.round(vp.width); c.height = Math.round(vp.height);
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+        await page.render({ canvasContext: ctx, viewport: vp }).promise;
+        const blob = await new Promise(r => c.toBlob(r, 'image/png'));
+        pages.push(URL.createObjectURL(blob));
+        c.width = c.height = 0;                    // 立即釋放畫布記憶體
+        page.cleanup();
+        show(pages);                               // 逐頁顯示，第一頁畫好就先看得到
+      }
+      pdf.destroy();
+    }
+    SHEET_CACHE[id] = pages;
+    show(pages);
+  } catch (err) {
+    if (alive()) box().innerHTML = `<div class="panel-empty">歌譜無法在頁面顯示（${esc(err.message)}）<br>請點右上角「開啟原檔」</div>`;
   }
 }
 
@@ -767,13 +833,11 @@ $('#main').addEventListener('click', e => {
   if (e.target.closest('#rosterBtn')) {
     const btn = $('#rosterBtn'), box = $('#roster');
     box.hidden = !box.hidden; btn.classList.toggle('open', !box.hidden);
-    writePref('rosterOpen', box.hidden ? '0' : '1');
     return;
   }
   if (e.target.closest('#bigPlay') || e.target.closest('#bPlay')) return togglePlay();
   if (e.target.closest('#bMode')) {
     P.mode = MODES[(MODES.indexOf(P.mode) + 1) % MODES.length];
-    writePref('mode', P.mode);
     renderMode();
     toast({ none: '不循環：依序播完後停止', one: '單曲循環', list: '清單循環' }[P.mode]);
     return;
