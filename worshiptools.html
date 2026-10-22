@@ -28,7 +28,7 @@
 
   /* ── 頁籤與日期膠囊：同一個 sticky 區塊 ── */
   .top { position: sticky; top: 0; z-index: 30; background: var(--white); box-shadow: 0 2px 10px rgba(26,33,48,.08); }
-  .fontbar { display: flex; align-items: center; gap: 6px; padding: 8px 16px 2px; padding-top: max(8px, env(safe-area-inset-top));
+  .fontbar { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 16px 2px; padding-top: max(8px, env(safe-area-inset-top));
              background: var(--blue); color: #fff; }
   .fontbar span { margin-right: 4px; font-size: 13px; font-weight: 700; opacity: .9; }
   .fontbar button { height: 30px; min-width: 44px; padding: 0 10px; border-radius: 9px; font-size: 14px; font-weight: 700;
@@ -185,6 +185,8 @@
   .hint { margin-bottom: 12px; font-size: 12px; color: var(--gray-4); }
   .submit { width: 100%; height: 48px; border-radius: 12px; font-size: 16px; font-weight: 800; color: var(--white); background: var(--blue); }
   .submit:disabled { opacity: .5; }
+  .back-line { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; max-width: 320px; margin: 0 auto 14px;
+               height: 46px; border-radius: 12px; font-size: 15px; font-weight: 800; color: #fff; background: var(--green); }
   .toast { position: fixed; left: 50%; bottom: max(24px, env(safe-area-inset-bottom)); z-index: 80; transform: translateX(-50%);
            padding: 10px 18px; border-radius: 20px; font-size: 14px; color: var(--white); background: rgba(26,33,48,.92); white-space: nowrap; }
 </style>
@@ -489,6 +491,7 @@ function renderService() {
     </section>`;
   }
   html += `<button class="foot-report" data-report>回報問題或建議</button>`;
+  html += backLineHTML();
   if (S.data.updated) html += `<p class="foot">資料更新：${esc(S.data.updated.replace('T', ' ').slice(0, 16))}</p>`;
   main.innerHTML = html;
 
@@ -835,6 +838,11 @@ function canSendToOA() {
   return !!c && c.type === 'utou' && (!c.scope || c.scope.indexOf('chat_message.write') > -1);
 }
 
+/** 頁面底部的「回到 LINE 聊天室」：與右上角 X 相同作用，但文字清楚 */
+function backLineHTML() {
+  return inLINE() ? '<button class="back-line" data-back>回到 LINE 聊天室</button>' : '';
+}
+
 /* ═════════════ 問題回報 ═════════════ */
 let rType = '歌詞錯誤';
 function openReport(songIdx) {
@@ -872,17 +880,24 @@ async function submitReport(e) {
     `說明：${content}`
   ].filter(Boolean).join('\n');
 
-  let via = '', name = '';
+  // 診斷資訊：記在試算表「備註」欄，用來判斷為何沒有傳到聊天室
+  let via = '', name = '', sendErr = '';
+  const c = liffOK && liff.getContext ? liff.getContext() : null;
+  let debug = !liffOK ? 'LINE 未初始化' : !liff.isInClient() ? '非 LINE 內開啟' :
+    `開啟位置=${c ? c.type : '未知'}；權限=${c && c.scope ? c.scope.join(',') : '未知'}`;
   if (canSendToOA()) {
-    try { await liff.sendMessages([{ type: 'text', text }]); via = 'LINE'; } catch (err) {}
+    try { await liff.sendMessages([{ type: 'text', text }]); via = 'LINE'; }
+    catch (err) { sendErr = `${err.code || ''} ${err.message || err}`.trim(); debug += `；傳送失敗=${sendErr}`; }
     try { name = (await liff.getProfile()).displayName; } catch (err) {}
+  } else if (inLINE()) {
+    debug += '；未傳送（不是從官方帳號一對一聊天室開啟，或缺少 chat_message.write 權限）';
   }
   let logged = false, why = '';
   try {
     // text/plain 不會觸發 CORS 預檢，GAS 可以直接接收
     const res = await fetch(API_URL, {
       method: 'POST',
-      body: JSON.stringify({ action: 'report', name, site: S.site, date: s ? s.date : '', song, type: rType, text: content, via: via || '網頁', page: location.href })
+      body: JSON.stringify({ action: 'report', name, site: S.site, date: s ? s.date : '', song, type: rType, text: content, via: via || '網頁', page: location.href, debug })
     });
     const raw = await res.text();
     try {
@@ -903,7 +918,8 @@ async function submitReport(e) {
   }
   $('#rText').value = '';
   closeReport();
-  toast(via ? '已送出，回報已傳到官方帳號' : '已送出，謝謝你的回報');
+  if (sendErr) alert('回報已記錄，但沒有傳到聊天室。\n原因：' + sendErr);
+  else toast(via ? '已送出，回報已傳到官方帳號' : '已送出，謝謝你的回報');
 }
 
 let toastTimer = 0;
@@ -999,7 +1015,7 @@ function renderMe() {
     ${up.length ? '<div class="me-sec">接下來</div>' + up.map((it, i) => card(it, i === 0, false)).join('') : ''}
     ${past.length ? `<div class="me-sec">最近 7 天</div>` + past.map(it => card(it, false, true)).join('') : ''}
     ${!shown.length ? '<div class="card empty">近期沒有排到你的服事。<br>若姓名寫法不同（例如暱稱），請用「問題回報」告訴同工。</div>' : ''}
-    <button class="foot-report" data-report>回報問題或建議</button>`;
+    <button class="foot-report" data-report>回報問題或建議</button>${backLineHTML()}`;
 }
 
 function meStateHTML() {
@@ -1068,6 +1084,7 @@ $('#main').addEventListener('click', e => {
     S.site = site; S.date = date; render(); window.scrollTo({ top: 0 });
     return;
   }
+  if (e.target.closest('[data-back]')) { liff.closeWindow(); return; }
   const me = e.target.closest('[data-me]');
   if (me) {
     if (me.dataset.me === 'login') liff.login({ redirectUri: location.href });
