@@ -17,7 +17,7 @@
     --green: #06C755;
     --gray-1: #F4F6F9; --gray-2: #E3E8EE; --gray-3: #B0BAC6; --gray-4: #6B7A8D;
     --black: #1A2130; --white: #FFFFFF;
-    --radius: 14px;
+    --radius: 16px;
     --font: -apple-system, BlinkMacSystemFont, 'PingFang TC', 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
   }
   html { -webkit-text-size-adjust: 100%; }
@@ -62,28 +62,69 @@
   .roster-toggle svg { transition: transform .2s; }
   .roster-toggle.open svg { transform: rotate(180deg); }
   .roster { margin-top: 8px; }
-  /* ── 連續播放 ── */
-  .pl-bar { display: flex; gap: 8px; margin-top: 14px; }
-  .play-all { flex: 1; height: 42px; display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 10px;
-              font-size: 15px; font-weight: 700; color: var(--white); background: var(--blue); }
-  .play-all.on { background: var(--blue-dk); }
-  .pl-loop { flex: 0 0 auto; height: 42px; padding: 0 12px; display: flex; align-items: center; gap: 6px; border-radius: 10px;
-             font-size: 14px; font-weight: 700; color: var(--gray-4); background: var(--gray-2); }
-  .pl-loop.on { color: var(--white); background: var(--blue); }
-  .playlist { margin-top: 12px; }
-  .pl-video { position: relative; border-radius: 10px; overflow: hidden; background: #000; aspect-ratio: 16/9; }
-  .pl-video > div, .pl-video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
-  .pl-list { list-style: none; margin-top: 6px; }
-  .pl-list li { display: flex; align-items: center; gap: 10px; padding: 9px 2px; border-bottom: 1px solid var(--gray-2); font-size: 15px; cursor: pointer; }
-  .pl-list li:last-child { border-bottom: 0; }
-  .pl-list .no { width: 22px; height: 22px; flex: 0 0 auto; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-                 font-size: 12px; font-weight: 700; color: var(--gray-4); background: var(--gray-1); }
-  .pl-list .t { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .pl-list li.cur { color: var(--blue); font-weight: 700; }
-  .pl-list li.cur .no { color: var(--white); background: var(--blue); }
-  .pl-list li.bad .t { color: var(--gray-3); }
-  .pl-list .yt { flex: 0 0 auto; font-size: 12px; font-weight: 700; color: var(--orange); text-decoration: none; }
-  .pl-msg { margin-top: 6px; font-size: 12px; color: var(--gray-4); }
+
+  /* ── 播放器卡：影片 → 功能鈕 → 歌詞／歌譜 → 曲目清單 ── */
+  .player { padding: 16px; }
+  .media { position: relative; aspect-ratio: 16/9; border-radius: 14px; overflow: hidden; background: #000; }
+  .media #ytBox, .media #ytBox > *, .media iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  .cover { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center;
+           gap: 10px; padding: 16px; color: #fff; font-size: 14px; text-align: center; background: #1d2430; }
+  .cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .cover .big { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; width: 100%; }
+  .cover .big span { width: 68px; height: 48px; border-radius: 14px; background: rgba(232,40,40,.94); display: flex; align-items: center; justify-content: center; }
+  .cover .cap { position: absolute; left: 0; right: 0; bottom: 0; padding: 22px 14px 10px; text-align: left; font-size: 15px; font-weight: 700;
+                background: linear-gradient(transparent, rgba(0,0,0,.65)); }
+  .cover a { color: #fff; font-weight: 700; padding: 7px 14px; border-radius: 8px; background: rgba(255,255,255,.18); text-decoration: none; }
+
+  .ctrls { display: flex; gap: 8px; margin: 12px 0 4px; }
+  .btn { height: 46px; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 15px; font-weight: 700; }
+  .btn.ic { width: 46px; flex: 0 0 auto; color: var(--white); background: var(--blue); }
+  .btn.mode { width: 56px; flex: 0 0 auto; flex-direction: column; gap: 0; line-height: 1; color: var(--gray-4); background: var(--gray-2); }
+  .btn.mode small { font-size: 10px; font-weight: 700; margin-top: 3px; }
+  .btn.mode.on { color: var(--white); background: var(--blue); }
+  .btn.txt { flex: 1; color: var(--blue); background: var(--blue-lt); }
+  .btn.txt.on { color: var(--white); background: var(--blue); }
+  .btn.txt.na:not(.on) { color: var(--gray-3); background: var(--gray-1); }
+  .btn.share { width: 46px; flex: 0 0 auto; color: var(--white); background: var(--green); }
+  .btn.dim { opacity: .4; }
+
+  .panel { margin-top: 10px; border-radius: 12px; border: 1px solid var(--gray-2); overflow: hidden; }
+  .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 14px;
+                font-size: 13px; font-weight: 700; color: var(--gray-4); background: var(--gray-1); }
+  .panel-head span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .panel-head a { flex: 0 0 auto; padding: 4px 10px; border-radius: 8px; font-size: 13px; color: var(--blue); background: var(--white);
+                  border: 1px solid var(--gray-2); text-decoration: none; }
+  .lyr-body { padding: 4px 16px 18px; font-size: 17px; line-height: 1.85; }
+  .lyr-body .sec { display: inline-block; margin: 14px 0 2px; padding: 0 8px; border-radius: 6px; font-size: 12px; font-weight: 700;
+                   line-height: 20px; color: var(--gray-4); background: var(--gray-1); letter-spacing: .04em; }
+  .lyr-body .gap { height: 10px; }
+  .sheet-frame { display: block; width: 100%; height: min(78vh, 760px); border: 0; background: #fff; }
+  .panel-empty { padding: 22px 14px; text-align: center; font-size: 14px; color: var(--gray-4); }
+
+  .tracks { list-style: none; margin-top: 8px; }
+  .tracks li { display: flex; align-items: center; gap: 14px; padding: 14px 2px; border-bottom: 1px solid var(--gray-2); cursor: pointer; }
+  .tracks li:last-child { border-bottom: 0; }
+  .tracks .no { width: 30px; height: 30px; flex: 0 0 auto; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+                font-size: 15px; font-weight: 800; color: var(--gray-4); background: var(--gray-1); }
+  .tracks .t { flex: 1; min-width: 0; font-size: 19px; font-weight: 700; line-height: 1.35; }
+  .tracks .resp { margin-left: 4px; font-size: 13px; font-weight: 700; color: var(--orange); }
+  .tracks .key { flex: 0 0 auto; padding: 1px 8px; border-radius: 8px; font-size: 12px; font-weight: 700; color: var(--white); background: var(--black); }
+  .tracks .note { flex: 0 0 auto; font-size: 12px; font-weight: 600; color: var(--gray-3); }
+  .tracks .note a { color: var(--orange); text-decoration: none; }
+  .tracks li.cur .no { color: var(--white); background: var(--blue); }
+  .tracks li.cur .t { color: var(--blue); }
+
+  .empty { padding: 28px 16px; text-align: center; color: var(--gray-4); font-size: 15px; }
+  .empty pre { margin-top: 12px; text-align: left; white-space: pre-wrap; font: inherit; color: var(--black); }
+  .err { padding: 40px 16px; text-align: center; }
+  .err button { margin-top: 14px; padding: 10px 20px; border-radius: 10px; color: #fff; background: var(--blue); font-weight: 700; }
+  .src { font-size: 13px; color: var(--gray-4); }
+  .skel { height: 120px; margin-bottom: 14px; border-radius: var(--radius);
+          background: linear-gradient(90deg, #e9edf2 25%, #f4f6f9 50%, #e9edf2 75%); background-size: 200% 100%; animation: sh 1.2s infinite; }
+  @keyframes sh { to { background-position: -200% 0; } }
+  .foot { text-align: center; font-size: 12px; color: var(--gray-3); }
+  .foot-report { display: block; margin: 4px auto 12px; padding: 10px 18px; border-radius: 10px; font-size: 14px; font-weight: 700;
+                 color: var(--gray-4); background: var(--white); border: 1px solid var(--gray-2); }
 
   /* ── 問題回報 ── */
   .mask { position: fixed; inset: 0; z-index: 70; display: flex; align-items: flex-end; justify-content: center; background: rgba(15,20,30,.45); }
@@ -103,67 +144,13 @@
   .hint { margin-bottom: 12px; font-size: 12px; color: var(--gray-4); }
   .submit { width: 100%; height: 48px; border-radius: 12px; font-size: 16px; font-weight: 800; color: var(--white); background: var(--blue); }
   .submit:disabled { opacity: .5; }
-  .foot-report { display: block; margin: 4px auto 12px; padding: 10px 18px; border-radius: 10px; font-size: 14px; font-weight: 700;
-                 color: var(--gray-4); background: var(--white); border: 1px solid var(--gray-2); }
   .toast { position: fixed; left: 50%; bottom: max(24px, env(safe-area-inset-bottom)); z-index: 80; transform: translateX(-50%);
            padding: 10px 18px; border-radius: 20px; font-size: 14px; color: var(--white); background: rgba(26,33,48,.92); white-space: nowrap; }
-
-  /* ── 歌曲卡 ── */
-  .song-head { padding: 14px 16px 10px; }
-  .tags { display: flex; gap: 6px; margin-bottom: 6px; }
-  .tag { padding: 1px 10px; border-radius: 10px; font-size: 12px; font-weight: 700; color: var(--blue); background: var(--blue-lt); }
-  .tag.resp { color: var(--orange); background: var(--orange-lt); }
-  .tag.key { color: var(--white); background: var(--black); }
-  .song-head h3 { font-size: 19px; font-weight: 800; line-height: 1.35; }
-  .src { font-size: 13px; color: var(--gray-4); }
-  .media { position: relative; aspect-ratio: 16/9; background: #000; }
-  .media img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: .9; }
-  .media .big { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; width: 100%; }
-  .media .big span { width: 64px; height: 46px; border-radius: 12px; background: rgba(232,40,40,.92); display: flex; align-items: center; justify-content: center; }
-  .media iframe, .media > div { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
-  .media .msg { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
-                padding: 16px; color: #fff; font-size: 14px; text-align: center; background: rgba(0,0,0,.75); }
-  .media .msg a { color: #fff; font-weight: 700; padding: 6px 14px; border-radius: 8px; background: rgba(255,255,255,.18); text-decoration: none; }
-  .linkbox { padding: 0 16px; }
-  .linkbox a { display: block; padding: 10px; border-radius: 10px; text-align: center; font-size: 14px; font-weight: 700; color: var(--blue); background: var(--blue-lt); text-decoration: none; }
-  .ctrls { display: flex; gap: 8px; padding: 12px 16px 14px; }
-  .btn { height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 15px; font-weight: 700; }
-  .btn.ic { width: 44px; flex: 0 0 auto; color: var(--white); background: var(--blue); }
-  .btn.ic.loop { background: var(--gray-2); color: var(--gray-4); }
-  .btn.ic.loop.on { background: var(--blue); color: var(--white); }
-  .btn.txt { flex: 1; color: var(--blue); background: var(--blue-lt); }
-  .btn.txt.on { color: var(--white); background: var(--blue); }
-  .btn.share { width: 44px; flex: 0 0 auto; color: var(--white); background: var(--green); }
-  .btn:disabled { opacity: .4; cursor: default; }
-  .lyrics { padding: 4px 18px 20px; font-size: 17px; line-height: 1.85; border-top: 1px solid var(--gray-2); }
-  .lyrics .sec { display: inline-block; margin: 14px 0 2px; padding: 0 8px; border-radius: 6px; font-size: 12px; font-weight: 700;
-                 line-height: 20px; color: var(--gray-4); background: var(--gray-1); letter-spacing: .04em; }
-  .lyrics .gap { height: 10px; }
-
-  .empty { padding: 28px 16px; text-align: center; color: var(--gray-4); font-size: 15px; }
-  .empty pre { margin-top: 12px; text-align: left; white-space: pre-wrap; font: inherit; color: var(--black); }
-  .err { padding: 40px 16px; text-align: center; }
-  .err button { margin-top: 14px; padding: 10px 20px; border-radius: 10px; color: #fff; background: var(--blue); font-weight: 700; }
-  .skel { height: 120px; margin-bottom: 14px; border-radius: var(--radius);
-          background: linear-gradient(90deg, #e9edf2 25%, #f4f6f9 50%, #e9edf2 75%); background-size: 200% 100%; animation: sh 1.2s infinite; }
-  @keyframes sh { to { background-position: -200% 0; } }
-  .foot { text-align: center; font-size: 12px; color: var(--gray-3); }
-
-  /* ── 歌譜檢視器 ── */
-  .viewer { position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; background: #111; }
-  .vbar { display: flex; align-items: center; gap: 6px; padding: 8px 10px; padding-top: max(8px, env(safe-area-inset-top)); color: #fff; background: #1d2430; }
-  .vbar button, .vbar a { height: 38px; min-width: 38px; padding: 0 8px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
-                          color: #fff; background: rgba(255,255,255,.12); font-size: 14px; text-decoration: none; }
-  .vbar button:disabled { opacity: .3; }
-  .vtitle { flex: 1; min-width: 0; text-align: center; font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .vtitle small { display: block; font-size: 11px; font-weight: 400; opacity: .7; }
-  .viewer iframe { flex: 1; width: 100%; border: 0; background: #fff; }
-  .vempty { flex: 1; display: flex; align-items: center; justify-content: center; color: #ccc; font-size: 15px; padding: 24px; text-align: center; }
 </style>
 </head>
 <body>
 
-<div class="top">
+<div class="top" id="top">
   <nav class="tabs">
     <button class="tab" data-site="本堂">本堂</button>
     <button class="tab" data-site="新秀">新秀</button>
@@ -174,24 +161,6 @@
 <main id="main">
   <div class="skel"></div><div class="skel" style="height:300px"></div>
 </main>
-
-<div class="viewer" id="viewer" hidden>
-  <div class="vbar">
-    <button id="vClose" aria-label="關閉">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
-    </button>
-    <button id="vPrev" aria-label="上一首">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg>
-    </button>
-    <div class="vtitle" id="vTitle"></div>
-    <button id="vNext" aria-label="下一首">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 5l7 7-7 7"/></svg>
-    </button>
-    <a id="vOpen" target="_blank" rel="noopener">開啟</a>
-  </div>
-  <iframe id="vFrame" allow="autoplay"></iframe>
-  <div class="vempty" id="vEmpty" hidden>這首歌的歌譜尚未上傳</div>
-</div>
 
 <div class="mask" id="report" hidden>
   <form class="sheet" id="reportForm" autocomplete="off">
@@ -225,25 +194,39 @@
 <script>
 /* ═════════════ 設定 ═════════════ */
 const API_URL = 'https://script.google.com/macros/s/AKfycbxyV_3V66PKFx7n4284C17_kDQbBsjT8qptrG1uBMGBeo1ZwGbiqmXoEIymw6BMz9Q/exec';   // GAS 部署網址
-const LIFF_ID = '2007843015-jGJQsDWB';                                // 有 LIFF ID 時填入：LINE 分享、問題回報傳到官方帳號聊天室
+const LIFF_ID = '2007843015-jGJQsDWB';             // LINE 分享、問題回報傳到官方帳號聊天室
 const SUNDAY_SWITCH_HOUR = 13;                     // 主日當天幾點後切換到下一週
 const OTHER_SWITCH_HOUR = 22;                      // 非主日聚會當天幾點後視為結束
 const SITE_PARAM = { main: '本堂', xinxiu: '新秀' };
 
 /* ═════════════ 狀態 ═════════════ */
-const S = { data: null, site: '本堂', date: null, view: [], players: {}, loop: new Set(), viewerIdx: -1 };
+const S = { data: null, site: '本堂', date: null, view: [] };
+// 播放器狀態：mode = none（不循環，依序播完停止）／one（單曲循環）／list（清單循環）
+const MODES = ['none', 'one', 'list'];
+const MODE_LABEL = { none: '不循環', one: '單曲', list: '循環' };
+const P = { player: null, ready: false, cur: 0, mode: 'none', bad: new Set(), auto: false, lyr: false, sheet: false };
+
 const $ = (sel, root = document) => root.querySelector(sel);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const WD = ['日', '一', '二', '三', '四', '五', '六'];
 
+const LOOP_PATH = '<path d="M17 2l3 3-3 3"/><path d="M4 11V9a4 4 0 0 1 4-4h12"/><path d="M7 22l-3-3 3-3"/><path d="M20 13v2a4 4 0 0 1-4 4H4"/>';
 const ICON = {
-  play: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg>',
-  pause: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="6.5" y="5" width="4" height="14" rx="1"/><rect x="13.5" y="5" width="4" height="14" rx="1"/></svg>',
-  loop: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l3 3-3 3"/><path d="M4 11V9a4 4 0 0 1 4-4h12"/><path d="M7 22l-3-3 3-3"/><path d="M20 13v2a4 4 0 0 1-4 4H4"/></svg>',
+  play: '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg>',
+  pause: '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><rect x="6.5" y="5" width="4" height="14" rx="1"/><rect x="13.5" y="5" width="4" height="14" rx="1"/></svg>',
+  list: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${LOOP_PATH}</svg>`,
+  one: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${LOOP_PATH}<path d="M11 10.5l1.5-1v5" stroke-width="2"/></svg>`,
+  none: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${LOOP_PATH}<path d="M4 4l16 16"/></svg>`,
   share: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18 16c-.8 0-1.5.3-2 .8l-7.3-4.2c.1-.2.1-.4.1-.6s0-.4-.1-.6L16 7.2c.5.5 1.2.8 2 .8 1.7 0 3-1.3 3-3s-1.3-3-3-3-3 1.3-3 3c0 .2 0 .4.1.6L7.8 9.8C7.3 9.3 6.6 9 5.8 9c-1.7 0-3 1.3-3 3s1.3 3 3 3c.8 0 1.5-.3 2-.8l7.3 4.2c-.1.2-.1.4-.1.6 0 1.6 1.3 2.9 2.9 2.9s2.9-1.3 2.9-2.9S19.6 16 18 16z"/></svg>',
   chev: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>',
   report: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M12 7v4M12 14h.01"/></svg>'
 };
+
+/* ═════════════ 偏好（僅存在本機） ═════════════ */
+function readPref(k) { try { return localStorage.getItem('wt_' + k); } catch (e) { return null; } }
+function writePref(k, v) { try { localStorage.setItem('wt_' + k, v); } catch (e) {} }
+P.mode = MODES.indexOf(readPref('mode')) > -1 ? readPref('mode') : 'none';
+P.lyr = readPref('lyrOpen') === '1';
 
 /* ═════════════ 日期工具 ═════════════ */
 const toDate = (ymd) => { const [y, m, d] = ymd.split('-').map(Number); return new Date(y, m - 1, d); };
@@ -263,12 +246,7 @@ function defaultDate(list) {
 }
 const shortLabel = (l) => (l || '').replace('教會禱告會', '禱告會').replace('宣教禱告會', '宣教禱告').replace('跨年禱告會', '跨年').slice(0, 5);
 
-/* ═════════════ 資料 ═════════════ */
-/**
- * 載入策略（先顯示、後更新）
- * 1. 有上次存在手機的資料 → 立即顯示（不到 1 秒）
- * 2. 同時向 GAS 取最新資料 → 內容有變才重新繪製
- */
+/* ═════════════ 資料：先顯示本機資料，背景更新 ═════════════ */
 const STORE_KEY = 'wt_data_v1';
 function readStore() { try { return JSON.parse(localStorage.getItem(STORE_KEY) || 'null'); } catch (e) { return null; } }
 function writeStore(d) { try { localStorage.setItem(STORE_KEY, JSON.stringify(d)); } catch (e) {} }
@@ -280,21 +258,13 @@ function fetchFresh() {
 
 async function load(freshPromise) {
   const cached = readStore();
-  if (cached && cached.sites) {
-    S.data = cached;
-    initFromURL();
-    render();
-  }
+  if (cached && cached.sites) { S.data = cached; initFromURL(); render(); }
   try {
     const fresh = await freshPromise;
     writeStore(fresh);
-    if (!S.data) {                              // 第一次開啟，沒有本機資料
-      S.data = fresh; initFromURL(); render();
-    } else if (fresh.ver !== S.data.ver || !fresh.ver) {
-      applyFresh(fresh);
-    } else {
-      S.data.updated = fresh.updated;
-    }
+    if (!S.data) { S.data = fresh; initFromURL(); render(); }
+    else if (fresh.ver !== S.data.ver || !fresh.ver) applyFresh(fresh);
+    else S.data.updated = fresh.updated;
   } catch (e) {
     if (!S.data) {
       $('#main').innerHTML = `<div class="card err"><div>資料載入失敗</div><div class="src">${esc(e.message)}</div><button onclick="location.reload()">重新載入</button></div>`;
@@ -304,17 +274,14 @@ async function load(freshPromise) {
   }
 }
 
-/** 新資料到達：沒在播放或操作時直接更新畫面；否則先存著，切換場次時套用 */
+/** 新資料到達：沒在播放或操作時才重新繪製，避免畫面突然跳動 */
 function applyFresh(fresh) {
   S.data = fresh;
   const list = S.data.sites[S.site] || [];
   if (!list.some(s => s.date === S.date)) S.date = defaultDate(list);
-  const busy = !$('#viewer').hidden || !$('#report').hidden || !!PL.player || Object.keys(S.players).length > 0
-    || !!document.querySelector('.lyrics:not([hidden])');
+  const busy = !$('#report').hidden || !!P.player || P.sheet || window.scrollY > 200;
   if (busy) { toast('資料已更新，切換場次後套用'); return; }
-  const y = window.scrollY;
   render();
-  window.scrollTo(0, y);
 }
 
 function initFromURL() {
@@ -330,8 +297,7 @@ let urlReady = !LIFF_ID;                         // LIFF 初始化完成前不�
 function syncURL() {
   if (!urlReady || !S.data) return;
   const key = Object.keys(SITE_PARAM).find(k => SITE_PARAM[k] === S.site);
-  const p = new URLSearchParams({ site: key, date: S.date || '' });
-  history.replaceState(null, '', location.pathname + '?' + p.toString());
+  history.replaceState(null, '', location.pathname + '?' + new URLSearchParams({ site: key, date: S.date || '' }));
 }
 
 /* ═════════════ 繪製 ═════════════ */
@@ -360,9 +326,7 @@ function renderChips() {
   }
 }
 
-function currentService() {
-  return (S.data.sites[S.site] || []).find(s => s.date === S.date);
-}
+const currentService = () => (S.data.sites[S.site] || []).find(s => s.date === S.date);
 
 function leaderNames(leader) {
   return String(leader || '').split(/[\n、,，/]/).map(n => n.replace(/[（(].*?[）)]/g, '').trim()).filter(Boolean);
@@ -375,12 +339,12 @@ function keyFor(song, leader) {
   return '';
 }
 function ytId(url) {
-  const m = String(url || '').match(/(?:youtu\.be\/|[?&]v=|\/embed\/|\/shorts\/)([\w-]{11})/);
+  const m = String(url || '').match(/(?:youtu\.be\/|[?&]v=|\/embed\/|\/shorts\/|\/live\/)([\w-]{11})/);
   return m ? m[1] : '';
 }
 
 function renderService() {
-  stopAll();
+  resetPlayer();
   const s = currentService();
   const main = $('#main');
   if (!s) { main.innerHTML = '<div class="card empty">這個堂點目前沒有排定的場次</div>'; return; }
@@ -401,7 +365,6 @@ function renderService() {
     .filter(r => r[1]).map(r => `<dt>${r[0]}</dt><dd>${esc(r[1])}</dd>`).join('');
   const roster = Object.entries(s.roster || {}).filter(r => r[1])
     .map(r => `<dt>${esc(r[0].replace('禱告&報告', '禱告報告'))}</dt><dd>${esc(r[1])}</dd>`).join('');
-  const vids = S.view.map(v => v.vid).filter(Boolean);
   const rosterOpen = readPref('rosterOpen') === '1';
 
   let html = `
@@ -416,52 +379,214 @@ function renderService() {
     <dl class="kv">${rows}</dl>
     ${roster ? `<button class="roster-toggle ${rosterOpen ? 'open' : ''}" id="rosterBtn">服事名單 ${ICON.chev}</button>
     <dl class="kv roster" id="roster" ${rosterOpen ? '' : 'hidden'}>${roster}</dl>` : ''}
-    ${vids.length > 1 ? `
-    <div class="pl-bar">
-      <button class="play-all" id="playAll">${ICON.play}連續播放</button>
-      <button class="pl-loop ${PL.loop ? 'on' : ''}" id="plLoop" aria-pressed="${PL.loop}">${ICON.loop}循環清單</button>
-    </div>
-    <div class="playlist" id="playlist" hidden>
-      <div class="pl-video" id="plVideo"></div>
-      <ol class="pl-list" id="plList"></ol>
-      <p class="pl-msg" id="plMsg" hidden></p>
-    </div>` : ''}
   </section>`;
 
   if (!S.view.length) {
     html += `<div class="card empty">歌單尚未公布${s.rawSetlist ? `<pre>${esc(s.rawSetlist)}</pre>` : ''}</div>`;
   } else {
-    let n = 0;
-    html += S.view.map((v, i) => {
-      const tag = v.type === 'response' ? '<span class="tag resp">回應</span>' : `<span class="tag">敬拜 ${++n}</span>`;
-      const media = v.vid
-        ? `<div class="media" id="media-${i}"><img loading="lazy" src="https://i.ytimg.com/vi/${v.vid}/hqdefault.jpg" alt=""><button class="big" data-act="play" data-i="${i}" aria-label="播放"><span>${ICON.play.replace('currentColor', '#fff')}</span></button></div>`
-        : (v.url ? `<div class="linkbox"><a href="${esc(v.url)}" target="_blank" rel="noopener">開啟參考連結</a></div>` : '');
-      return `
-      <section class="card song" id="song-${i}">
-        <div class="song-head">
-          <div class="tags">${tag}${v.key ? `<span class="tag key">${esc(v.key)} 調</span>` : ''}</div>
-          <h3>${esc(v.title)}</h3>
-          ${v.source ? `<div class="src">${esc(v.source)}</div>` : ''}
-        </div>
-        ${media}
-        <div class="ctrls">
-          <button class="btn ic" data-act="toggle" data-i="${i}" ${v.vid ? '' : 'disabled'} aria-label="播放或暫停">${ICON.play}</button>
-          <button class="btn ic loop" data-act="loop" data-i="${i}" ${v.vid ? '' : 'disabled'} aria-label="單曲循環">${ICON.loop}</button>
-          <button class="btn txt" data-act="lyrics" data-i="${i}" ${v.lyrics ? '' : 'disabled'}>${v.lyrics ? '歌詞' : '無歌詞'}</button>
-          <button class="btn txt" data-act="sheet" data-i="${i}">${v.sheet ? '歌譜' : '無歌譜'}</button>
-          <button class="btn share" data-act="share" data-i="${i}" ${v.lyrics || v.url ? '' : 'disabled'} aria-label="分享">${ICON.share}</button>
-        </div>
-        <div class="lyrics" id="lyr-${i}" hidden></div>
-      </section>`;
-    }).join('');
+    html += `
+    <section class="card player" id="player">
+      <div class="media" id="media"><div id="ytBox"></div><div class="cover" id="cover"></div></div>
+      <div class="ctrls">
+        <button class="btn ic" id="bPlay" aria-label="播放或暫停">${ICON.play}</button>
+        <button class="btn mode" id="bMode" aria-label="循環模式"></button>
+        <button class="btn txt" id="bLyr">歌詞</button>
+        <button class="btn txt" id="bSheet">歌譜</button>
+        <button class="btn share" id="bShare" aria-label="分享">${ICON.share}</button>
+      </div>
+      <div class="panel" id="lyrPanel" hidden></div>
+      <div class="panel" id="sheetPanel" hidden></div>
+      <ol class="tracks" id="tracks"></ol>
+    </section>`;
   }
   html += `<button class="foot-report" data-report>回報問題或建議</button>`;
   if (S.data.updated) html += `<p class="foot">資料更新：${esc(S.data.updated.replace('T', ' ').slice(0, 16))}</p>`;
   main.innerHTML = html;
+
+  if (S.view.length) {
+    renderMode();
+    setSong(0, false);                            // 預設第一首（不自動播放）
+  }
 }
 
-/* ═════════════ 歌詞 ═════════════ */
+/* ═════════════ 播放器 ═════════════ */
+function renderTracks() {
+  $('#tracks').innerHTML = S.view.map((v, i) => {
+    let note = '';
+    if (!v.vid) note = '<span class="note">無影片</span>';
+    else if (P.bad.has(i)) note = `<span class="note"><a href="https://youtu.be/${v.vid}" target="_blank" rel="noopener">到 YouTube 聽</a></span>`;
+    return `<li class="${i === P.cur ? 'cur' : ''}" data-i="${i}">
+      <span class="no">${i + 1}</span>
+      <span class="t">${esc(v.title)}${v.type === 'response' ? '<span class="resp">回應</span>' : ''}</span>
+      ${note}${v.key ? `<span class="key">${esc(v.key)}</span>` : ''}
+    </li>`;
+  }).join('');
+}
+
+function renderMode() {
+  const b = $('#bMode');
+  b.innerHTML = `${ICON[P.mode]}<small>${MODE_LABEL[P.mode]}</small>`;
+  b.classList.toggle('on', P.mode !== 'none');
+}
+
+function setPlayIcon(playing) { const b = $('#bPlay'); if (b) b.innerHTML = playing ? ICON.pause : ICON.play; }
+
+/** 切換到第 i 首；play = true 時立即播放 */
+function setSong(i, play) {
+  P.cur = i;
+  const v = S.view[i];
+  renderTracks();
+  $('#bPlay').classList.toggle('dim', !v.vid);
+  $('#bLyr').classList.toggle('na', !v.lyrics);
+  $('#bSheet').classList.toggle('na', !v.sheet);
+  renderPanels();
+
+  if (!v.vid) {
+    stopVideo();
+    showCover(`<div>這首歌沒有影片</div>${v.url ? `<a href="${esc(v.url)}" target="_blank" rel="noopener">開啟參考連結</a>` : ''}`);
+    return;
+  }
+  if (P.bad.has(i) && !play) { showBadCover(v); return; }
+  if (P.player && P.ready) {
+    hideCover();
+    play ? P.player.loadVideoById(v.vid) : P.player.cueVideoById(v.vid);
+  } else if (P.player) {
+    hideCover();                                   // 播放器建立中，onReady 會載入目前這首
+  } else if (play) {
+    createPlayer(v.vid);
+  } else {
+    showCover(`<img src="https://i.ytimg.com/vi/${v.vid}/hqdefault.jpg" alt="">
+      <button class="big" id="bigPlay" aria-label="播放"><span>${ICON.play.replace('currentColor', '#fff')}</span></button>
+      <div class="cap">${i + 1}. ${esc(v.title)}</div>`);
+  }
+}
+
+function showCover(html) { const c = $('#cover'); c.innerHTML = html; c.hidden = false; setPlayIcon(false); }
+function hideCover() { $('#cover').hidden = true; }
+function showBadCover(v) {
+  showCover(`<div>此影片的上傳者不允許在其他網站播放</div><a href="https://youtu.be/${v.vid}" target="_blank" rel="noopener">到 YouTube 觀看</a>`);
+}
+function stopVideo() { if (P.player && P.ready) { try { P.player.stopVideo(); } catch (e) {} } }
+
+let ytReady = null;
+function loadYT() {
+  if (ytReady) return ytReady;
+  ytReady = new Promise(res => {
+    window.onYouTubeIframeAPIReady = res;
+    const s = document.createElement('script');
+    s.src = 'https://www.youtube.com/iframe_api';
+    document.head.appendChild(s);
+  });
+  return ytReady;
+}
+
+async function createPlayer(vid) {
+  hideCover();
+  await loadYT();
+  if (P.player || !$('#ytBox')) return;
+  $('#ytBox').innerHTML = '<div></div>';
+  P.player = new YT.Player($('#ytBox').firstChild, {
+    videoId: vid,
+    playerVars: { autoplay: 1, playsinline: 1, rel: 0 },
+    events: {
+      onReady: e => {
+        P.ready = true;
+        const cur = S.view[P.cur];
+        if (!cur || !cur.vid) return;
+        const loaded = e.target.getVideoData ? e.target.getVideoData().video_id : vid;
+        if (loaded !== cur.vid) e.target.loadVideoById(cur.vid); else e.target.playVideo();
+      },
+      onStateChange: onState,
+      onError: onError
+    }
+  });
+}
+
+function onState(e) {
+  if (e.data === YT.PlayerState.PLAYING) { P.auto = false; setPlayIcon(true); }
+  else if (e.data !== YT.PlayerState.BUFFERING) setPlayIcon(false);
+  if (e.data === YT.PlayerState.ENDED) onEnded();
+}
+
+/** 播完一首：依循環模式決定下一步 */
+function onEnded() {
+  if (P.mode === 'one') { P.player.seekTo(0); P.player.playVideo(); return; }
+  const n = nextPlayable(P.cur, P.mode === 'list');
+  if (n < 0) { setPlayIcon(false); return; }
+  P.auto = true;
+  setSong(n, true);
+}
+
+/** 找下一首可播放的歌：跳過沒有影片、或已知禁止嵌入的影片 */
+function nextPlayable(from, wrap) {
+  const len = S.view.length;
+  let j = from;
+  for (let step = 0; step < len; step++) {
+    j++;
+    if (j >= len) { if (!wrap) return -1; j = 0; }
+    if (j === from) return -1;
+    if (S.view[j].vid && !P.bad.has(j)) return j;
+  }
+  return -1;
+}
+
+function onError() {
+  P.bad.add(P.cur);
+  renderTracks();
+  if (P.auto) {                                    // 自動接播時遇到禁止嵌入的影片：直接跳下一首
+    const n = nextPlayable(P.cur, P.mode === 'list');
+    toast('已略過無法在頁面播放的影片');
+    if (n > -1) { setSong(n, true); return; }
+  }
+  P.auto = false;
+  showBadCover(S.view[P.cur]);
+}
+
+function togglePlay() {
+  const v = S.view[P.cur];
+  if (!v || !v.vid) return;
+  if (P.bad.has(P.cur)) { showBadCover(v); return; }
+  if (!P.player) { createPlayer(v.vid); return; }
+  if (!P.ready) return;
+  if (P.player.getPlayerState() === YT.PlayerState.PLAYING) P.player.pauseVideo();
+  else { hideCover(); P.player.playVideo(); }
+}
+
+function resetPlayer() {
+  if (P.player) { try { P.player.destroy(); } catch (e) {} }
+  P.player = null; P.ready = false; P.cur = 0; P.auto = false; P.bad.clear(); P.sheet = false;
+}
+
+/* ═════════════ 歌詞／歌譜區塊 ═════════════ */
+function renderPanels() {
+  const v = S.view[P.cur];
+  const lp = $('#lyrPanel'), sp = $('#sheetPanel');
+  $('#bLyr').classList.toggle('on', P.lyr);
+  $('#bSheet').classList.toggle('on', P.sheet);
+
+  lp.hidden = !P.lyr;
+  if (P.lyr) {
+    lp.innerHTML = `<div class="panel-head"><span>歌詞｜${esc(v.title)}</span></div>` +
+      (v.lyrics ? `<div class="lyr-body">${lyricsHTML(v.lyrics)}</div>` : '<div class="panel-empty">這首歌沒有歌詞資料</div>');
+  }
+
+  sp.hidden = !P.sheet;
+  if (P.sheet) {
+    const sh = v.sheet;
+    const open = sh && sh.url ? `<a href="${esc(sh.url)}" target="_blank" rel="noopener">開啟原檔</a>` : '';
+    const body = sh && sh.driveId
+      ? `<iframe class="sheet-frame" src="https://drive.google.com/file/d/${sh.driveId}/preview" allow="autoplay" loading="lazy"></iframe>`
+      : `<div class="panel-empty">${sh ? '這份歌譜請點「開啟原檔」查看' : '這首歌的歌譜尚未上傳'}</div>`;
+    const prev = sp.dataset.song;
+    if (prev !== String(P.cur) || !sp.innerHTML) {  // 同一首不重新載入，避免歌譜閃爍
+      sp.innerHTML = `<div class="panel-head"><span>歌譜｜${esc(v.title)}${v.key ? `（${esc(v.key)} 調）` : ''}</span>${open}</div>${body}`;
+      sp.dataset.song = String(P.cur);
+    }
+  } else {
+    sp.innerHTML = ''; sp.dataset.song = '';
+  }
+}
+
 const LABEL_RE = /^\[?\(?\s*(intro|intor|verse|pre[\s-]*chorus|prechrous|chorus|choruse|chrous|chours|chorsu|bridge|brige|ending|endting|inter|interlude|outro|tag|rap|a\d|b|c)\s*\d*\s*\)?\]?$/i;
 function lyricLines(raw) {
   const lines = String(raw || '').split(/\r?\n/).map(l => l.trim());
@@ -482,177 +607,15 @@ function lyricsPlain(raw) {
   return lyricLines(raw).filter(l => !LABEL_RE.test(l)).join('\n').replace(/\n{3,}/g, '\n\n').trim();
 }
 
-/* ═════════════ YouTube ═════════════ */
-let ytReady = null;
-function loadYT() {
-  if (ytReady) return ytReady;
-  ytReady = new Promise(res => {
-    window.onYouTubeIframeAPIReady = res;
-    const s = document.createElement('script');
-    s.src = 'https://www.youtube.com/iframe_api';
-    document.head.appendChild(s);
-  });
-  return ytReady;
-}
-async function play(i) {
-  const v = S.view[i];
-  if (!v || !v.vid) return;
-  pausePlaylist();
-  pauseOthers(i);
-  const p = S.players[i];
-  if (p && p.playVideo) { p.playVideo(); return; }
-  await loadYT();
-  const holder = $('#media-' + i);
-  holder.innerHTML = '<div></div>';
-  S.players[i] = new YT.Player(holder.firstChild, {
-    videoId: v.vid,
-    playerVars: { autoplay: 1, playsinline: 1, rel: 0 },
-    events: {
-      onReady: e => e.target.playVideo(),
-      onStateChange: e => onState(i, e),
-      onError: () => {
-        holder.insertAdjacentHTML('beforeend', `<div class="msg">此影片無法在頁面內播放<a href="https://youtu.be/${v.vid}" target="_blank" rel="noopener">到 YouTube 觀看</a></div>`);
-      }
-    }
-  });
-}
-function onState(i, e) {
-  const btn = $(`[data-act="toggle"][data-i="${i}"]`);
-  if (e.data === YT.PlayerState.PLAYING) { pauseOthers(i); pausePlaylist(); if (btn) btn.innerHTML = ICON.pause; }
-  if (e.data === YT.PlayerState.PAUSED && btn) btn.innerHTML = ICON.play;
-  if (e.data === YT.PlayerState.ENDED) {
-    if (S.loop.has(i)) { e.target.seekTo(0); e.target.playVideo(); }
-    else if (btn) btn.innerHTML = ICON.play;
+/** 點清單切歌時，若影片已捲出畫面，捲回播放器頂端 */
+function revealMedia() {
+  const m = $('#media');
+  if (!m) return;
+  const topH = $('#top').offsetHeight;
+  const r = m.getBoundingClientRect();
+  if (r.top < topH || r.top > window.innerHeight * 0.6) {
+    window.scrollTo({ top: window.scrollY + r.top - topH - 12, behavior: 'smooth' });
   }
-}
-function pauseOthers(i) {
-  Object.entries(S.players).forEach(([k, p]) => { if (+k !== i && p.pauseVideo) p.pauseVideo(); });
-}
-function stopAll() {
-  Object.values(S.players).forEach(p => { try { p.destroy(); } catch (e) {} });
-  S.players = {}; S.loop.clear();
-  stopPlaylist();
-}
-
-/* ═════════════ 連續播放（自行管理佇列，遇到禁止嵌入的影片自動跳過） ═════════════ */
-const PL = { player: null, ready: false, queue: [], pos: -1, fails: 0, bad: new Set(), loop: readPref('plLoop') === '1' };
-
-function startPlaylist(pos = 0) {
-  Object.values(S.players).forEach(p => p.pauseVideo && p.pauseVideo());
-  PL.queue = S.view.map((v, i) => (v.vid ? i : -1)).filter(i => i > -1);
-  if (!PL.queue.length) return;
-  PL.fails = 0;
-  $('#plMsg').hidden = true;
-  $('#playlist').hidden = false;
-  const btn = $('#playAll');
-  btn.classList.add('on'); btn.innerHTML = ICON.pause + '停止播放';
-  plGo(pos);
-}
-async function plGo(pos) {
-  PL.pos = pos;
-  renderPlList();
-  const vid = S.view[PL.queue[pos]].vid;
-  if (PL.player && PL.ready) { PL.player.loadVideoById(vid); return; }
-  if (PL.player) return;                                   // 播放器建立中，onReady 會載入目前這首
-  await loadYT();
-  if ($('#playlist').hidden) return;
-  $('#plVideo').innerHTML = '<div></div>';
-  PL.player = new YT.Player($('#plVideo').firstChild, {
-    videoId: vid,
-    playerVars: { autoplay: 1, playsinline: 1, rel: 0 },
-    events: {
-      onReady: e => {
-        PL.ready = true;
-        const cur = S.view[PL.queue[PL.pos]].vid;
-        if (e.target.getVideoData && e.target.getVideoData().video_id !== cur) e.target.loadVideoById(cur);
-        else e.target.playVideo();
-      },
-      onStateChange: plState,
-      onError: plError
-    }
-  });
-}
-function plNext() {
-  let p = PL.pos;
-  for (let step = 0; step < PL.queue.length; step++) {
-    p++;
-    if (p >= PL.queue.length) {
-      if (!PL.loop) { plMsg('清單播放完畢'); finishPlaylist(); return; }
-      p = 0;
-    }
-    if (!PL.bad.has(PL.queue[p])) { plGo(p); return; }   // 已知無法播放的影片直接跳過
-  }
-  plMsg('清單中的影片都無法在頁面內播放'); finishPlaylist();
-}
-function plState(e) {
-  if (e.data === YT.PlayerState.PLAYING) {
-    PL.fails = 0;
-    Object.values(S.players).forEach(p => p.pauseVideo && p.pauseVideo());
-  }
-  if (e.data === YT.PlayerState.ENDED) plNext();
-}
-function plError() {
-  PL.bad.add(PL.queue[PL.pos]);
-  PL.fails++;
-  if (PL.fails >= PL.queue.length) { plMsg('清單中的影片都無法在頁面內播放'); finishPlaylist(); return; }
-  plMsg('已略過無法在頁面內播放的影片');
-  plNext();
-}
-function plMsg(t) { const m = $('#plMsg'); if (m) { m.textContent = t; m.hidden = false; } }
-function renderPlList() {
-  const ol = $('#plList');
-  if (!ol) return;
-  ol.innerHTML = PL.queue.map((idx, p) => {
-    const v = S.view[idx], bad = PL.bad.has(idx);
-    return `<li class="${p === PL.pos ? 'cur' : ''} ${bad ? 'bad' : ''}" data-pl="${p}">
-      <span class="no">${p + 1}</span><span class="t">${esc(v.title)}${v.type === 'response' ? '（回應）' : ''}</span>
-      ${bad ? `<a class="yt" href="https://youtu.be/${v.vid}" target="_blank" rel="noopener">到 YouTube 聽</a>` : ''}</li>`;
-  }).join('');
-}
-function pausePlaylist() { if (PL.player && PL.ready && PL.player.pauseVideo) PL.player.pauseVideo(); }
-/** 播完或全部失敗：保留清單畫面，按鈕回到可重新播放 */
-function finishPlaylist() {
-  PL.pos = -1; renderPlList();
-  const btn = $('#playAll');
-  if (btn) { btn.classList.remove('on'); btn.innerHTML = ICON.play + '連續播放'; }
-}
-function stopPlaylist() {
-  if (PL.player) { try { PL.player.destroy(); } catch (e) {} }
-  PL.player = null; PL.ready = false; PL.pos = -1; PL.fails = 0; PL.bad.clear();
-  const box = $('#playlist'), btn = $('#playAll');
-  if (box) { box.hidden = true; $('#plVideo').innerHTML = ''; $('#plMsg').hidden = true; }
-  if (btn) { btn.classList.remove('on'); btn.innerHTML = ICON.play + '連續播放'; }
-}
-
-/* ═════════════ 歌譜檢視器 ═════════════ */
-function openViewer(i) {
-  S.viewerIdx = i;
-  const v = S.view[i];
-  $('#vTitle').innerHTML = `${esc(v.title)}${v.key ? `<small>${esc(v.key)} 調・${i + 1} / ${S.view.length}</small>` : `<small>${i + 1} / ${S.view.length}</small>`}`;
-  $('#vPrev').disabled = i === 0;
-  $('#vNext').disabled = i === S.view.length - 1;
-  const frame = $('#vFrame'), empty = $('#vEmpty'), open = $('#vOpen');
-  const sh = v.sheet;
-  if (sh && sh.driveId) {
-    frame.src = `https://drive.google.com/file/d/${sh.driveId}/preview`;
-    frame.hidden = false; empty.hidden = true;
-    open.href = sh.url; open.hidden = false;
-  } else if (sh && sh.url) {
-    frame.removeAttribute('src'); frame.hidden = true;
-    empty.hidden = false; empty.textContent = '此歌譜需在新視窗開啟';
-    open.href = sh.url; open.hidden = false;
-  } else {
-    frame.removeAttribute('src'); frame.hidden = true;
-    empty.hidden = false; empty.textContent = '這首歌的歌譜尚未上傳';
-    open.hidden = true;
-  }
-  $('#viewer').hidden = false;
-  document.body.style.overflow = 'hidden';
-}
-function closeViewer() {
-  $('#viewer').hidden = true;
-  $('#vFrame').removeAttribute('src');
-  document.body.style.overflow = '';
 }
 
 /* ═════════════ 分享 ═════════════ */
@@ -679,7 +642,6 @@ function inLINE() { return liffOK && liff.isInClient(); }
 function canSendToOA() {
   if (!inLINE()) return false;
   const c = liff.getContext && liff.getContext();
-  // utou = 一對一聊天室；需在 LIFF 設定勾選 chat_message.write
   return !!c && c.type === 'utou' && (!c.scope || c.scope.indexOf('chat_message.write') > -1);
 }
 
@@ -738,7 +700,6 @@ async function submitReport(e) {
       logged = j.ok === true;
       if (!logged) why = j.error || '伺服器未接受';
     } catch (err) {
-      // 回傳不是 JSON：通常是 GAS 尚未部署含 doPost 的新版本，或新權限尚未授權
       why = /doPost/.test(raw) ? '伺服器尚未更新（找不到 doPost）' : '伺服器回應異常（可能尚未授權）';
     }
   } catch (err) {
@@ -754,6 +715,7 @@ async function submitReport(e) {
   closeReport();
   toast(via ? '已送出，回報已傳到官方帳號' : '已送出，謝謝你的回報');
 }
+
 let toastTimer = 0;
 function toast(t) {
   const el = $('#toast');
@@ -761,10 +723,6 @@ function toast(t) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => { el.hidden = true; }, 2600);
 }
-
-/* ═════════════ 偏好（僅存在本機） ═════════════ */
-function readPref(k) { try { return localStorage.getItem('wt_' + k); } catch (e) { return null; } }
-function writePref(k, v) { try { localStorage.setItem('wt_' + k, v); } catch (e) {} }
 
 /* ═════════════ 事件 ═════════════ */
 document.querySelector('.tabs').addEventListener('click', e => {
@@ -785,59 +743,31 @@ $('#dates').addEventListener('click', e => {
 });
 
 $('#main').addEventListener('click', e => {
-  if (e.target.closest('[data-report]')) return openReport();
-  if (e.target.closest('#playAll')) return $('#playAll').classList.contains('on') ? stopPlaylist() : startPlaylist(0);
-  if (e.target.closest('#plLoop')) {
-    PL.loop = !PL.loop;
-    const b = $('#plLoop');
-    b.classList.toggle('on', PL.loop); b.setAttribute('aria-pressed', PL.loop);
-    writePref('plLoop', PL.loop ? '1' : '0');
-    toast(PL.loop ? '清單循環：開' : '清單循環：關');
-    return;
-  }
-  const li = e.target.closest('[data-pl]');
-  if (li && !e.target.closest('a')) {
-    if (!$('#playAll').classList.contains('on')) startPlaylist(+li.dataset.pl);
-    else plGo(+li.dataset.pl);
-    return;
-  }
+  if (e.target.closest('[data-report]')) return openReport(S.view.length ? P.cur : null);
   if (e.target.closest('#rosterBtn')) {
     const btn = $('#rosterBtn'), box = $('#roster');
     box.hidden = !box.hidden; btn.classList.toggle('open', !box.hidden);
     writePref('rosterOpen', box.hidden ? '0' : '1');
     return;
   }
-  const b = e.target.closest('[data-act]');
-  if (!b || b.disabled) return;
-  const i = +b.dataset.i;
-  switch (b.dataset.act) {
-    case 'play': play(i); break;
-    case 'toggle': {
-      const p = S.players[i];
-      if (p && p.getPlayerState && p.getPlayerState() === YT.PlayerState.PLAYING) p.pauseVideo();
-      else play(i);
-      break;
-    }
-    case 'loop':
-      S.loop.has(i) ? S.loop.delete(i) : S.loop.add(i);
-      b.classList.toggle('on', S.loop.has(i));
-      break;
-    case 'lyrics': {
-      const box = $('#lyr-' + i);
-      if (!box.innerHTML) box.innerHTML = lyricsHTML(S.view[i].lyrics);
-      box.hidden = !box.hidden;
-      b.classList.toggle('on', !box.hidden);
-      b.textContent = box.hidden ? '歌詞' : '收合';
-      break;
-    }
-    case 'sheet': openViewer(i); break;
-    case 'share': share(i); break;
+  if (e.target.closest('#bigPlay') || e.target.closest('#bPlay')) return togglePlay();
+  if (e.target.closest('#bMode')) {
+    P.mode = MODES[(MODES.indexOf(P.mode) + 1) % MODES.length];
+    writePref('mode', P.mode);
+    renderMode();
+    toast({ none: '不循環：依序播完後停止', one: '單曲循環', list: '清單循環' }[P.mode]);
+    return;
+  }
+  if (e.target.closest('#bLyr')) { P.lyr = !P.lyr; writePref('lyrOpen', P.lyr ? '1' : '0'); renderPanels(); return; }
+  if (e.target.closest('#bSheet')) { P.sheet = !P.sheet; renderPanels(); return; }
+  if (e.target.closest('#bShare')) return share(P.cur);
+  const li = e.target.closest('#tracks li');
+  if (li && !e.target.closest('a')) {
+    P.auto = false;
+    setSong(+li.dataset.i, true);
+    revealMedia();
   }
 });
-
-$('#vClose').addEventListener('click', closeViewer);
-$('#vPrev').addEventListener('click', () => S.viewerIdx > 0 && openViewer(S.viewerIdx - 1));
-$('#vNext').addEventListener('click', () => S.viewerIdx < S.view.length - 1 && openViewer(S.viewerIdx + 1));
 
 $('#rClose').addEventListener('click', closeReport);
 $('#report').addEventListener('click', e => { if (e.target.id === 'report') closeReport(); });
@@ -850,7 +780,6 @@ $('#rType').addEventListener('click', e => {
 $('#reportForm').addEventListener('submit', submitReport);
 
 /* ═════════════ 啟動 ═════════════ */
-/** 先完成 LIFF 初始化再載入資料，避免網址參數被提早改寫而影響 LIFF 登入與轉址 */
 function initLiff() {
   if (!LIFF_ID) return Promise.resolve();
   return new Promise(resolve => {
