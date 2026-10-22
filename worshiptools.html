@@ -236,7 +236,7 @@ const SITE_PARAM = { main: '本堂', xinxiu: '新秀', me: '個人' };
 
 /* ═════════════ 狀態 ═════════════ */
 const S = { data: null, site: '本堂', date: null, view: [] };
-// 播放器狀態：mode = none（不循環，依序播完停止）／one（單曲循環）／list（清單循環）
+// 播放器狀態：mode = none（不循環，只播目前這首）／one（單曲循環）／list（清單循環，依序播放並從頭再來）
 const MODES = ['none', 'one', 'list'];
 const MODE_LABEL = { none: '不循環', one: '單曲', list: '循環' };
 // panel = none（隱藏）／lyr（歌詞）／sheet（歌譜）：一次只顯示一種
@@ -546,7 +546,8 @@ function onState(e) {
 /** 播完一首：依循環模式決定下一步 */
 function onEnded() {
   if (P.mode === 'one') { P.player.seekTo(0); P.player.playVideo(); return; }
-  const n = nextPlayable(P.cur, P.mode === 'list');
+  if (P.mode === 'none') { setPlayIcon(false); return; }   // 不循環：只播目前這首
+  const n = nextPlayable(P.cur, true);
   if (n < 0) { setPlayIcon(false); return; }
   P.auto = true;
   setSong(n, true);
@@ -569,7 +570,7 @@ function onError() {
   P.bad.add(P.cur);
   renderTracks();
   if (P.auto) {                                    // 自動接播時遇到禁止嵌入的影片：直接跳下一首
-    const n = nextPlayable(P.cur, P.mode === 'list');
+    const n = nextPlayable(P.cur, true);
     toast('已略過無法在頁面播放的影片');
     if (n > -1) { setSong(n, true); return; }
   }
@@ -690,11 +691,29 @@ async function loadSheet(i) {
 }
 
 const LABEL_RE = /^\[?\(?\s*(intro|intor|verse|pre[\s-]*chorus|prechrous|chorus|choruse|chrous|chours|chorsu|bridge|brige|ending|endting|inter|interlude|outro|tag|rap|a\d|b|c)\s*\d*\s*\)?\]?$/i;
+/**
+ * 歌詞整理：從第一個 Verse 開始顯示（含段落名稱）
+ * 1. Verse 之前的 Blank、Intro、歌名、版權資訊都略過
+ * 2. 沒有 Verse 的歌，從第一個非 Intro 的段落開始
+ * 3. 沒有歌詞的段落名稱（例如間奏 Inter、Intro）不顯示
+ */
 function lyricLines(raw) {
-  const lines = String(raw || '').split(/\r?\n/).map(l => l.trim());
-  const firstLabel = lines.findIndex(l => LABEL_RE.test(l));
-  const start = firstLabel > -1 ? firstLabel : 0;     // 第一個段落標籤前的作者、版權資訊略過
-  return lines.slice(start).filter(l => !/^blank$/i.test(l) && !/^[【〖].*[】〗]$/.test(l));
+  const lines = String(raw || '').split(/\r?\n/).map(l => l.trim())
+    .filter(l => !/^blank$/i.test(l) && !/^[【〖].*[】〗]$/.test(l));
+  const isLabel = l => LABEL_RE.test(l);
+  let start = lines.findIndex(l => isLabel(l) && /^\W*verse/i.test(l));
+  if (start < 0) start = lines.findIndex(l => isLabel(l) && !/^\W*(intro|intor)/i.test(l));
+  if (start < 0) start = 0;
+  const body = lines.slice(start), out = [];
+  for (let i = 0; i < body.length; i++) {
+    if (isLabel(body[i])) {
+      let j = i + 1;
+      while (j < body.length && !body[j]) j++;
+      if (j >= body.length || isLabel(body[j])) continue;   // 這個段落沒有歌詞
+    }
+    out.push(body[i]);
+  }
+  return out;
 }
 function lyricsHTML(raw) {
   let out = '', gap = false;
@@ -1011,7 +1030,7 @@ $('#main').addEventListener('click', e => {
   if (e.target.closest('#bMode')) {
     P.mode = MODES[(MODES.indexOf(P.mode) + 1) % MODES.length];
     renderMode();
-    toast({ none: '不循環：依序播完後停止', one: '單曲循環', list: '清單循環' }[P.mode]);
+    toast({ none: '不循環：播完這首就停止', one: '單曲循環', list: '清單循環：依序播放，播完從頭開始' }[P.mode]);
     return;
   }
   if (e.target.closest('#bPanel')) { cyclePanel(); return; }
