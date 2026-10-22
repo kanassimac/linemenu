@@ -34,8 +34,8 @@
   .fontbar button { height: 30px; min-width: 44px; padding: 0 10px; border-radius: 9px; font-size: 14px; font-weight: 700;
                     color: #fff; background: rgba(255,255,255,.18); }
   .fontbar button.on { color: var(--blue); background: #fff; }
-  .tabs { display: flex; gap: 8px; padding: 8px 16px 0; background: var(--blue); }
-  .tab { flex: 1; padding: 10px 0 9px; border-radius: 12px 12px 0 0; font-size: 17px; font-weight: 700; letter-spacing: .1em;
+  .tabs { display: flex; gap: 6px; padding: 8px 12px 0; background: var(--blue); }
+  .tab { flex: 1; min-width: 0; padding: 10px 0 9px; border-radius: 12px 12px 0 0; font-size: 16px; font-weight: 700; letter-spacing: .04em; white-space: nowrap;
          color: rgba(255,255,255,.9); background: rgba(255,255,255,.16); }
   .tab.on { background: var(--white); color: var(--blue); }
   .dates { display: flex; gap: 8px; overflow-x: auto; padding: 12px 16px; scrollbar-width: none; }
@@ -174,6 +174,39 @@
                    font-size: 16px; font-weight: 800; color: var(--white); background: var(--blue); }
   .me-state .act:disabled { opacity: .5; }
 
+  /* ── 曲目查詢 ── */
+  .libbar { padding: 10px 16px; }
+  .libbar input { width: 100%; height: 44px; padding: 0 14px 0 40px; border-radius: 12px; border: 1.5px solid var(--gray-2); font: inherit; font-size: 16px;
+                  background: var(--gray-1) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%236B7A8D' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-4-4'/%3E%3C/svg%3E") no-repeat 13px center; }
+  .libbar input:focus { outline: none; border-color: var(--blue); background-color: #fff; }
+  .lib-head { display: flex; align-items: center; justify-content: space-between; margin: 0 4px 8px; font-size: 13px; color: var(--gray-4); }
+  .lib-list { list-style: none; padding: 0 12px; }
+  .lib-list li { display: flex; align-items: center; gap: 12px; padding: 12px 2px; border-bottom: 1px solid var(--gray-2); cursor: pointer; }
+  .lib-list li:last-child { border-bottom: 0; }
+  .lib-list .pick { width: 30px; height: 30px; flex: 0 0 auto; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+                    font-size: 14px; font-weight: 800; color: transparent; border: 2px solid var(--gray-3); }
+  .lib-list li.on .pick { color: #fff; background: var(--blue); border-color: var(--blue); }
+  .lib-list li.on { background: var(--blue-lt); margin: 0 -12px; padding-left: 14px; padding-right: 14px; }
+  .lib-list .body { flex: 1; min-width: 0; }
+  .lib-list .tt { font-size: calc(18px * var(--fz)); font-weight: 800; line-height: 1.35; }
+  .lib-list .so { font-size: calc(13px * var(--fz)); color: var(--gray-4); }
+  .lib-list .meta { display: flex; flex-wrap: wrap; gap: 4px 8px; margin-top: 3px; font-size: calc(12px * var(--fz)); color: var(--gray-4); }
+  .lib-list .tag { padding: 0 7px; border-radius: 7px; font-size: 11px; font-weight: 800; line-height: 18px; }
+  .lib-list .tag.new { color: var(--orange); background: var(--orange-lt); }
+  .lib-list .tag.next { color: var(--blue-dk); background: var(--blue-lt); }
+  .lib-list .keys { flex: 0 0 auto; max-width: 30%; text-align: right; font-size: 11px; font-weight: 700; color: var(--gray-4); }
+  .lib-empty { padding: 30px 16px; text-align: center; color: var(--gray-4); }
+  .selbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; display: flex; align-items: center; gap: 8px;
+            padding: 10px 16px; padding-bottom: max(10px, env(safe-area-inset-bottom)); background: #fff; box-shadow: 0 -2px 12px rgba(26,33,48,.12); }
+  .selbar .cnt { flex: 1; font-size: 15px; font-weight: 800; }
+  .selbar button { height: 44px; padding: 0 14px; border-radius: 12px; font-size: 15px; font-weight: 800; }
+  .selbar .clear { color: var(--gray-4); background: var(--gray-1); }
+  .selbar .start { color: #fff; background: var(--blue); }
+  .lib-pad { height: 76px; }
+  .setlist-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 16px; }
+  .setlist-head .when { font-size: calc(20px * var(--fz)); }
+  .back-btn { flex: 0 0 auto; height: 38px; padding: 0 12px; border-radius: 10px; font-size: 14px; font-weight: 700; color: var(--blue); background: var(--blue-lt); }
+
   /* ── 問題回報 ── */
   .mask { position: fixed; inset: 0; z-index: 70; display: flex; align-items: flex-end; justify-content: center; background: rgba(15,20,30,.45); }
   .sheet { width: 100%; max-width: 560px; max-height: 92vh; overflow-y: auto; padding: 18px 16px;
@@ -210,8 +243,12 @@
     <button class="tab" data-site="本堂">本堂</button>
     <button class="tab" data-site="新秀">新秀</button>
     <button class="tab me" data-site="個人">個人</button>
+    <button class="tab lib" data-site="曲目">曲目查詢</button>
   </nav>
   <div class="dates" id="dates"></div>
+  <div class="libbar" id="libbar" hidden>
+    <input id="libQ" type="search" placeholder="搜尋歌名或出處（例如：讚美之泉）" autocomplete="off" enterkeyhint="search">
+  </div>
 </div>
 
 <main id="main">
@@ -253,7 +290,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbxyV_3V66PKFx7n4284C17_
 const LIFF_ID = '2007843015-jGJQsDWB';             // LINE 分享、問題回報傳到官方帳號聊天室
 const SUNDAY_SWITCH_HOUR = 13;                     // 主日當天幾點後切換到下一週
 const OTHER_SWITCH_HOUR = 22;                      // 非主日聚會當天幾點後視為結束
-const SITE_PARAM = { main: '本堂', xinxiu: '新秀', me: '個人' };
+const SITE_PARAM = { main: '本堂', xinxiu: '新秀', me: '個人', lib: '曲目' };
 
 /* ═════════════ 狀態 ═════════════ */
 const S = { data: null, site: '本堂', date: null, view: [] };
@@ -365,6 +402,7 @@ async function load(freshPromise) {
 function applyFresh(fresh) {
   S.data = fresh;
   if (S.site === '個人') { renderMe(); return; }
+  if (S.site === '曲目') return;                     // 曲目查詢使用自己的資料
   const list = siteList(S.site);
   if (!list.some(s => s.date === S.date)) S.date = defaultDate(list);
   const busy = !$('#report').hidden || !!P.player || P.panel === 'sheet' || window.scrollY > 200;
@@ -375,8 +413,8 @@ function applyFresh(fresh) {
 function initFromURL() {
   const p = new URLSearchParams(location.search);
   const site = SITE_PARAM[p.get('site')] || p.get('site');
-  if (site === '本堂' || site === '新秀' || site === '個人') S.site = site;
-  const list = siteList(S.site === '個人' ? '本堂' : S.site);
+  if (site === '本堂' || site === '新秀' || site === '個人' || site === '曲目') S.site = site;
+  const list = siteList(S.site === '個人' || S.site === '曲目' ? '本堂' : S.site);
   const d = p.get('date');
   S.date = list.some(s => s.date === d) ? d : defaultDate(list);
 }
@@ -391,9 +429,12 @@ function syncURL() {
 /* ═════════════ 繪製 ═════════════ */
 function render() {
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.site === S.site));
-  const personal = S.site === '個人';
-  $('#dates').hidden = personal;
+  const personal = S.site === '個人', lib = S.site === '曲目';
+  $('#dates').hidden = personal || lib;
+  $('#libbar').hidden = !lib || LIB.mode === 'play';
+  if (!lib) $('#selbar') && $('#selbar').remove();
   if (personal) { resetPlayer(); S.view = []; renderMe(); }
+  else if (lib) { renderLib(); }
   else { renderChips(); renderService(); }
   syncURL();
 }
@@ -447,17 +488,7 @@ function renderService() {
   const main = $('#main');
   if (!s) { main.innerHTML = '<div class="card empty">這個堂點目前沒有排定的場次</div>'; return; }
 
-  S.view = s.songs.map(it => {
-    const info = S.data.songs[it.key] || {};
-    const url = info.youtube || it.youtube || '';
-    return {
-      type: it.type, name: it.name,
-      title: info.title || it.name, source: info.source || '',
-      url, vid: ytId(url), lyrics: info.lyrics || '', sheet: info.sheet || null,
-      sheets: info.sheets || (info.sheet ? [{ key: '', driveId: info.sheet.driveId, url: info.sheet.url }] : []),
-      key: keyFor(info, s.leader)
-    };
-  });
+  S.view = s.songs.map(it => toView(S.data.songs[it.key] || {}, it, s.leader));
 
   const d = toDate(s.date);
   const rows = [['主領', s.leader], ['講員', s.speaker], ['團練', s.practice], ['聖餐', s.communion]]
@@ -482,7 +513,32 @@ function renderService() {
   if (!S.view.length) {
     html += `<div class="card empty">歌單尚未公布${s.rawSetlist ? `<pre>${esc(s.rawSetlist)}</pre>` : ''}</div>`;
   } else {
-    html += `
+    html += playerHTML();
+  }
+  html += `<button class="foot-report" data-report>回報問題或建議</button>`;
+  if (S.data.updated) html += `<p class="foot">資料更新：${esc(S.data.updated.replace('T', ' ').slice(0, 16))}</p>`;
+  main.innerHTML = html;
+
+  if (S.view.length) {
+    renderMode();
+    setSong(0, false);                            // 預設第一首（不自動播放）
+  }
+}
+
+/** 歌曲資料 → 播放器使用的格式（主日歌單與曲目查詢共用） */
+function toView(info, it, leader) {
+  const url = info.youtube || it.youtube || '';
+  return {
+    type: it.type || 'worship', name: it.name || info.name,
+    title: info.title || it.name || info.name, source: info.source || '',
+    url, vid: ytId(url), lyrics: info.lyrics || '', sheet: info.sheet || null,
+    sheets: info.sheets || (info.sheet ? [{ key: '', driveId: info.sheet.driveId, url: info.sheet.url }] : []),
+    key: leader ? keyFor(info, leader) : ''
+  };
+}
+
+function playerHTML() {
+  return `
     <section class="card player" id="player">
       <div class="media" id="media"><div id="ytBox"></div><div class="cover" id="cover"></div></div>
       <div class="ctrls">
@@ -495,15 +551,6 @@ function renderService() {
       <div class="panel" id="sheetPanel" hidden></div>
       <ol class="tracks" id="tracks"></ol>
     </section>`;
-  }
-  html += `<button class="foot-report" data-report>回報問題或建議</button>`;
-  if (S.data.updated) html += `<p class="foot">資料更新：${esc(S.data.updated.replace('T', ' ').slice(0, 16))}</p>`;
-  main.innerHTML = html;
-
-  if (S.view.length) {
-    renderMode();
-    setSong(0, false);                            // 預設第一首（不自動播放）
-  }
 }
 
 /* ═════════════ 播放器 ═════════════ */
@@ -1059,6 +1106,122 @@ async function applyMe(btn) {
   }
 }
 
+/* ═════════════ 曲目查詢 ═════════════
+ * 列表：搜尋歌名或出處、點選加入（左側顯示順序）
+ * 練習：已選的歌依選取順序，放進與主日歌單相同的播放器
+ */
+const LIB_KEY = 'wt_lib_v1';
+const LIB = { data: null, q: '', sel: [], mode: 'list', loading: false, error: '' };
+(function () {
+  try { const c = JSON.parse(localStorage.getItem(LIB_KEY) || 'null'); if (c && c.songs) LIB.data = c; } catch (e) {}
+  try { LIB.sel = JSON.parse(localStorage.getItem('wt_libsel') || '[]'); } catch (e) {}
+})();
+const ZH = new Intl.Collator('zh-Hant-TW');
+const saveSel = () => { try { localStorage.setItem('wt_libsel', JSON.stringify(LIB.sel)); } catch (e) {} };
+
+async function loadLib() {
+  if (LIB.loading) return;
+  LIB.loading = true;
+  try {
+    const d = window.__LIB_MOCK__ || await fetch(API_URL + '?library=1').then(r => r.json());
+    if (d.error) throw new Error(d.error);
+    const changed = !LIB.data || LIB.data.ver !== d.ver;
+    LIB.data = d; LIB.error = '';
+    try { localStorage.setItem(LIB_KEY, JSON.stringify(d)); } catch (e) {}
+    const names = new Set(d.songs.map(x => x.name));
+    LIB.sel = LIB.sel.filter(n => names.has(n));  // 已從清單移除的歌，自動取消選取
+    if (changed && S.site === '曲目' && LIB.mode === 'list') renderLib();
+  } catch (err) {
+    LIB.error = err.message;
+    if (!LIB.data && S.site === '曲目') renderLib();
+  } finally {
+    LIB.loading = false;
+  }
+}
+
+const daysAgo = (iso) => iso ? Math.floor((Date.now() - toDate(iso).getTime()) / 86400000) : Infinity;
+const ymdSlash = (iso) => iso ? iso.replace(/-/g, '/') : '';
+
+function libMatches() {
+  const q = LIB.q.trim().toLowerCase().replace(/\s+/g, '');
+  const all = LIB.data.songs.slice().sort((a, b) => ZH.compare(a.title, b.title));
+  if (!q) return all;
+  return all.filter(s => (s.title + s.source + s.name).toLowerCase().replace(/\s+/g, '').includes(q));
+}
+
+function renderLib() {
+  const main = $('#main');
+  if (LIB.mode === 'play') return renderSetlist();
+  resetPlayer(); S.view = [];
+  if (!LIB.data) {
+    main.innerHTML = LIB.error
+      ? `<div class="card err"><div>曲庫載入失敗</div><div class="src">${esc(LIB.error)}</div><button onclick="loadLib()">重試</button></div>`
+      : '<div class="skel"></div><div class="skel" style="height:400px"></div>';
+    renderSelbar();
+    return;
+  }
+  const list = libMatches();
+  const row = (s) => {
+    const n = LIB.sel.indexOf(s.name);
+    const keys = (s.sheets || []).filter(x => x.key).map(x => x.key);
+    const meta = [];
+    if (s.last) meta.push(`上次 ${ymdSlash(s.last)}`);
+    if (s.year) meta.push(`今年 ${esc(s.year)} 次`);
+    const tags = [];
+    if (s.next) tags.push(`<span class="tag next">已排 ${md(s.next)}</span>`);
+    else if (daysAgo(s.last) > 182) tags.push('<span class="tag new">半年未唱</span>');   // 依主領須知，半年未唱視為新歌
+    return `<li class="${n > -1 ? 'on' : ''}" data-lib="${esc(s.name)}">
+      <span class="pick">${n > -1 ? n + 1 : ''}</span>
+      <div class="body">
+        <div class="tt">${esc(s.title)}</div>
+        ${s.source ? `<div class="so">${esc(s.source)}</div>` : ''}
+        ${meta.length || tags.length ? `<div class="meta">${tags.join('')}${meta.map(m => `<span>${m}</span>`).join('')}</div>` : ''}
+      </div>
+      ${keys.length ? `<span class="keys">${keys.map(esc).join(' ')}</span>` : ''}
+    </li>`;
+  };
+  main.innerHTML = `
+    <div class="lib-head"><span>${LIB.q ? `找到 ${list.length} 首` : `共 ${list.length} 首`}｜點選歌曲加入練習清單</span></div>
+    <section class="card">${list.length ? `<ul class="lib-list">${list.map(row).join('')}</ul>` : '<div class="lib-empty">找不到符合的歌曲</div>'}</section>
+    <div class="lib-pad"></div>`;
+  renderSelbar();
+}
+
+function renderSelbar() {
+  let bar = $('#selbar');
+  if (S.site !== '曲目' || LIB.mode !== 'list' || !LIB.sel.length) { if (bar) bar.remove(); return; }
+  if (!bar) { bar = document.createElement('div'); bar.id = 'selbar'; bar.className = 'selbar'; document.body.appendChild(bar); }
+  bar.innerHTML = `<span class="cnt">已選 ${LIB.sel.length} 首</span>
+    <button class="clear" data-lib-act="clear">清除</button>
+    <button class="start" data-lib-act="start">開始練習 ▶</button>`;
+}
+
+function renderSetlist() {
+  const byName = new Map(LIB.data.songs.map(s => [s.name, s]));
+  const songs = LIB.sel.map(n => byName.get(n)).filter(Boolean);
+  if (!songs.length) { LIB.mode = 'list'; return render(); }
+  resetPlayer();
+  S.view = songs.map(s => toView(s, { name: s.name }, ''));
+  $('#main').innerHTML = `
+    <section class="card setlist-head">
+      <div><div class="when">練習清單</div><span class="type">曲目查詢｜${songs.length} 首</span></div>
+      <button class="back-btn" data-lib-act="back">‹ 返回選歌</button>
+    </section>
+    ${playerHTML()}
+    <button class="foot-report" data-report>回報問題或建議</button>`;
+  renderMode();
+  setSong(0, false);
+}
+
+function toggleLibSong(name) {
+  const i = LIB.sel.indexOf(name);
+  if (i > -1) LIB.sel.splice(i, 1); else LIB.sel.push(name);
+  saveSel();
+  const y = window.scrollY;
+  renderLib();
+  window.scrollTo(0, y);
+}
+
 /* ═════════════ 事件 ═════════════ */
 document.querySelector('.tabs').addEventListener('click', e => {
   const t = e.target.closest('.tab');
@@ -1068,9 +1231,25 @@ document.querySelector('.tabs').addEventListener('click', e => {
     const list = siteList(S.site);
     if (!list.some(s => s.date === S.date)) S.date = defaultDate(list);   // 同一天就保留，方便兩堂比對
   }
+  if (S.site === '曲目') LIB.mode = 'list';
   render();
   window.scrollTo({ top: 0 });
   if (S.site === '個人') refreshMe();
+  if (S.site === '曲目') loadLib();
+});
+
+$('#libQ').addEventListener('input', e => {
+  LIB.q = e.target.value;
+  if (S.site === '曲目' && LIB.mode === 'list' && LIB.data) renderLib();
+});
+$('#libQ').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
+document.body.addEventListener('click', e => {
+  const a = e.target.closest('[data-lib-act]');
+  if (!a) return;
+  const act = a.dataset.libAct;
+  if (act === 'clear') { LIB.sel = []; saveSel(); renderLib(); }
+  if (act === 'start') { LIB.mode = 'play'; $('#libbar').hidden = true; renderSelbar(); renderSetlist(); window.scrollTo({ top: 0 }); }
+  if (act === 'back') { LIB.mode = 'list'; render(); }
 });
 
 $('#dates').addEventListener('click', e => {
@@ -1095,6 +1274,8 @@ $('#main').addEventListener('click', e => {
     else { setMe({ status: 'loading' }); refreshMe(); }
     return;
   }
+  const ls = e.target.closest('[data-lib]');
+  if (ls) return toggleLibSong(ls.dataset.lib);
   if (e.target.closest('[data-report]')) return openReport(S.site !== '個人' && S.view.length ? P.cur : null);
   if (e.target.closest('#rosterBtn')) {
     const btn = $('#rosterBtn'), box = $('#roster');
@@ -1150,6 +1331,7 @@ load(freshPromise);
 liffDone = initLiff();
 liffDone.then(() => { urlReady = true; syncURL(); });
 if (new URLSearchParams(location.search).get('site') === 'me') refreshMe();
+if (new URLSearchParams(location.search).get('site') === 'lib') loadLib();
 </script>
 </body>
 </html>
