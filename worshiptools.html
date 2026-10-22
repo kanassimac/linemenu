@@ -1113,7 +1113,7 @@ async function applyMe(btn) {
 const LIB_KEY = 'wt_lib_v1';
 const LIB = { data: null, q: '', sel: [], mode: 'list', loading: false, error: '' };
 (function () {
-  try { const c = JSON.parse(localStorage.getItem(LIB_KEY) || 'null'); if (c && c.songs) LIB.data = c; } catch (e) {}
+  try { const c = JSON.parse(localStorage.getItem(LIB_KEY) || 'null'); if (c && Array.isArray(c.songs)) LIB.data = c; } catch (e) {}
   try { LIB.sel = JSON.parse(localStorage.getItem('wt_libsel') || '[]'); } catch (e) {}
 })();
 const ZH = new Intl.Collator('zh-Hant-TW');
@@ -1125,6 +1125,7 @@ async function loadLib() {
   try {
     const d = window.__LIB_MOCK__ || await fetch(API_URL + '?library=1').then(r => r.json());
     if (d.error) throw new Error(d.error);
+    if (!Array.isArray(d.songs)) throw new Error('伺服器尚未部署曲目查詢的新版本');
     const changed = !LIB.data || LIB.data.ver !== d.ver;
     LIB.data = d; LIB.error = '';
     try { localStorage.setItem(LIB_KEY, JSON.stringify(d)); } catch (e) {}
@@ -1133,7 +1134,7 @@ async function loadLib() {
     if (changed && S.site === '曲目' && LIB.mode === 'list') renderLib();
   } catch (err) {
     LIB.error = err.message;
-    if (!LIB.data && S.site === '曲目') renderLib();
+    if (S.site === '曲目' && LIB.mode === 'list') renderLib();
   } finally {
     LIB.loading = false;
   }
@@ -1150,10 +1151,17 @@ function libMatches() {
 }
 
 function renderLib() {
+  try { renderLibInner(); }
+  catch (err) {                                     // 任何錯誤都顯示訊息，不留下其他頁籤的畫面
+    $('#main').innerHTML = `<div class="card err"><div>曲目查詢暫時無法顯示</div><div class="src">${esc(err.message)}</div><button onclick="LIB.data=null;loadLib();renderLib()">重新載入</button></div>`;
+  }
+}
+
+function renderLibInner() {
   const main = $('#main');
   if (LIB.mode === 'play') return renderSetlist();
   resetPlayer(); S.view = [];
-  if (!LIB.data) {
+  if (!LIB.data || (LIB.error && !LIB.data.songs.length)) {
     main.innerHTML = LIB.error
       ? `<div class="card err"><div>曲庫載入失敗</div><div class="src">${esc(LIB.error)}</div><button onclick="loadLib()">重試</button></div>`
       : '<div class="skel"></div><div class="skel" style="height:400px"></div>';
