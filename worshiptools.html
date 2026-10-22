@@ -220,7 +220,7 @@
 <script>
 /* ═════════════ 設定 ═════════════ */
 const API_URL = 'https://script.google.com/macros/s/AKfycbxyV_3V66PKFx7n4284C17_kDQbBsjT8qptrG1uBMGBeo1ZwGbiqmXoEIymw6BMz9Q/exec';   // GAS 部署網址
-const LIFF_ID = '';                                // 有 LIFF ID 時填入：LINE 分享、問題回報傳到官方帳號聊天室
+const LIFF_ID = '2007843015-jGJQsDWB';                                // 有 LIFF ID 時填入：LINE 分享、問題回報傳到官方帳號聊天室
 const SUNDAY_SWITCH_HOUR = 13;                     // 主日當天幾點後切換到下一週
 const OTHER_SWITCH_HOUR = 22;                      // 非主日聚會當天幾點後視為結束
 const SITE_PARAM = { main: '本堂', xinxiu: '新秀' };
@@ -633,9 +633,10 @@ let liffOK = false;                                    // liff.init 成功後才
 function inLINE() { return liffOK && liff.isInClient(); }
 /** 只在「與官方帳號的一對一聊天室」開啟時，才把回報傳進聊天室，避免誤送到群組 */
 function canSendToOA() {
-  if (!inLINE() || !liff.isApiAvailable || !liff.isApiAvailable('sendMessages')) return false;
+  if (!inLINE()) return false;
   const c = liff.getContext && liff.getContext();
-  return !!c && c.type === 'utou';
+  // utou = 一對一聊天室；需在 LIFF 設定勾選 chat_message.write
+  return !!c && c.type === 'utou' && (!c.scope || c.scope.indexOf('chat_message.write') > -1);
 }
 
 /* ═════════════ 問題回報 ═════════════ */
@@ -648,7 +649,7 @@ function openReport(songIdx) {
   if (songIdx != null) $('#rSong').value = songIdx;
   $('#rHint').textContent = canSendToOA()
     ? '送出後，回報會出現在你與官方帳號的聊天室，同工會在那裡回覆你。'
-    : '回報會記錄給教會同工處理。';
+    : '回報會記錄給教會同工處理。從官方帳號選單開啟本頁，回報才會同步出現在聊天室。';
   $('#rSubmit').disabled = false; $('#rSubmit').textContent = '送出';
   $('#report').hidden = false;
   document.body.style.overflow = 'hidden';
@@ -680,19 +681,29 @@ async function submitReport(e) {
     try { await liff.sendMessages([{ type: 'text', text }]); via = 'LINE'; } catch (err) {}
     try { name = (await liff.getProfile()).displayName; } catch (err) {}
   }
-  let logged = false;
+  let logged = false, why = '';
   try {
     // text/plain 不會觸發 CORS 預檢，GAS 可以直接接收
     const res = await fetch(API_URL, {
       method: 'POST',
       body: JSON.stringify({ action: 'report', name, site: S.site, date: s ? s.date : '', song, type: rType, text: content, via: via || '網頁', page: location.href })
     });
-    logged = (await res.json()).ok === true;
-  } catch (err) {}
+    const raw = await res.text();
+    try {
+      const j = JSON.parse(raw);
+      logged = j.ok === true;
+      if (!logged) why = j.error || '伺服器未接受';
+    } catch (err) {
+      // 回傳不是 JSON：通常是 GAS 尚未部署含 doPost 的新版本，或新權限尚未授權
+      why = /doPost/.test(raw) ? '伺服器尚未更新（找不到 doPost）' : '伺服器回應異常（可能尚未授權）';
+    }
+  } catch (err) {
+    why = '無法連線到伺服器';
+  }
 
   if (!via && !logged) {
     btn.disabled = false; btn.textContent = '送出';
-    alert('送出失敗，請檢查網路後再試一次');
+    alert('送出失敗：' + why + '\n請稍後再試，或直接在 LINE 告訴同工');
     return;
   }
   $('#rText').value = '';
@@ -795,13 +806,19 @@ $('#rType').addEventListener('click', e => {
 $('#reportForm').addEventListener('submit', submitReport);
 
 /* ═════════════ 啟動 ═════════════ */
-if (LIFF_ID) {
-  const s = document.createElement('script');
-  s.src = 'https://static.line-scdn.net/liff/edge/2/sdk.js';
-  s.onload = () => liff.init({ liffId: LIFF_ID }).then(() => { liffOK = true; }).catch(() => {});
-  document.head.appendChild(s);
+/** 先完成 LIFF 初始化再載入資料，避免網址參數被提早改寫而影響 LIFF 登入與轉址 */
+function initLiff() {
+  if (!LIFF_ID) return Promise.resolve();
+  return new Promise(resolve => {
+    const s = document.createElement('script');
+    s.src = 'https://static.line-scdn.net/liff/edge/2/sdk.js';
+    s.onload = () => liff.init({ liffId: LIFF_ID }).then(() => { liffOK = true; }).catch(() => {}).finally(resolve);
+    s.onerror = resolve;
+    document.head.appendChild(s);
+    setTimeout(resolve, 5000);                       // 最多等 5 秒，LINE 異常時頁面仍可使用
+  });
 }
-load();
+initLiff().then(load);
 </script>
 </body>
 </html>
