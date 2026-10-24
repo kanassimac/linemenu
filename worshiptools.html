@@ -28,12 +28,14 @@
 
   /* ── 頁籤與日期膠囊：同一個 sticky 區塊 ── */
   .top { position: sticky; top: 0; z-index: 30; background: var(--white); box-shadow: 0 2px 10px rgba(26,33,48,.08); }
-  .fontbar { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 16px 2px; padding-top: max(8px, env(safe-area-inset-top));
+  .fontbar { display: flex; align-items: center; justify-content: flex-start; gap: 6px; padding: 8px 16px 2px; padding-top: max(8px, env(safe-area-inset-top));
              background: var(--blue); color: #fff; }
   .fontbar span { margin-right: 4px; font-size: 13px; font-weight: 700; opacity: .9; }
   .fontbar button { height: 30px; min-width: 44px; padding: 0 10px; border-radius: 9px; font-size: 14px; font-weight: 700;
                     color: #fff; background: rgba(255,255,255,.18); }
   .fontbar button.on { color: var(--blue); background: #fff; }
+  .fontbar .top-report { margin-left: auto; display: flex; align-items: center; gap: 4px; min-width: 0; padding: 0 10px;
+                         border: 1.5px solid rgba(255,255,255,.55); background: transparent; white-space: nowrap; }
   .tabs { display: flex; gap: 6px; padding: 8px 12px 0; background: var(--blue); }
   .tab { flex: 1; min-width: 0; padding: 10px 0 9px; border-radius: 12px 12px 0 0; font-size: 16px; font-weight: 700; letter-spacing: .04em; white-space: nowrap;
          color: rgba(255,255,255,.9); background: rgba(255,255,255,.16); }
@@ -274,6 +276,7 @@
     <button data-fz="1">中</button>
     <button data-fz="1.15">大</button>
     <button data-fz="1.3">特大</button>
+    <button class="top-report" id="topReport" aria-label="問題回報"></button>
   </div>
   <nav class="tabs">
     <button class="tab" data-site="本堂">本堂</button>
@@ -384,7 +387,7 @@ function applyFz(v) {
 }
 applyFz(readPref('fz') || '1');
 $('#fontbar').addEventListener('click', e => {
-  const b = e.target.closest('button');
+  const b = e.target.closest('[data-fz]');
   if (b) applyFz(b.dataset.fz);
 });
 
@@ -556,7 +559,6 @@ function renderService() {
         <div class="when">${md(s.date)}（${WD[d.getDay()]}）</div>
         <span class="type">${esc(S.site)}｜${esc(s.label)}</span>
       </div>
-      <button class="report-btn" data-report>${ICON.report}問題回報</button>
     </div>
     <dl class="kv">${rows}</dl>
     ${roster ? `<button class="roster-toggle" id="rosterBtn">服事名單 ${ICON.chev}</button>
@@ -568,7 +570,6 @@ function renderService() {
   } else {
     html += playerHTML();
   }
-  html += `<button class="foot-report" data-report>回報問題或建議</button>`;
   if (S.data.updated) html += `<p class="foot">資料更新：${esc(S.data.updated.replace('T', ' ').slice(0, 16))}</p>`;
   main.innerHTML = html;
 
@@ -937,7 +938,7 @@ function renderViewer() {
     err => { if (tk === FSV.token) box.innerHTML = `<div class="fsv-msg">歌譜無法顯示（${esc(err.message)}）</div>`; });
 }
 function setZoom(z) {
-  FSV.zoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, z));
+  FSV.zoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, Math.round(z * 100) / 100));
   $('#fsvPages').style.width = (FSV.zoom * 100) + '%';
   $('#fsvZoom').textContent = Math.round(FSV.zoom * 100) + '%';
   $('#fsvOut').disabled = FSV.zoom <= ZOOM_MIN;
@@ -976,8 +977,20 @@ function zoomCenter(z) { const r = $('#fsvScroll').getBoundingClientRect(); zoom
   });
   sc.addEventListener('dblclick', e => zoomAt(FSV.zoom > 1.2 ? 1 : 2, e.clientX, e.clientY));
   $('#fsvClose').addEventListener('click', closeViewer);
-  $('#fsvIn').addEventListener('click', () => zoomCenter(FSV.zoom + 0.5));
-  $('#fsvOut').addEventListener('click', () => zoomCenter(FSV.zoom - 0.5));
+  // ＋／－：按一下增減 1%；按住不放會連續調整，越按越快
+  const ZOOM_STEP = 0.01;
+  const holdZoom = (btn, dir) => {
+    let timer = 0, n = 0, held = false;
+    const tick = () => { held = true; zoomCenter(FSV.zoom + dir * ZOOM_STEP * (n < 10 ? 1 : n < 30 ? 3 : 5)); n++; timer = setTimeout(tick, 60); };
+    const start = (e) => { e.preventDefault(); n = 0; held = false; timer = setTimeout(tick, 350); };
+    const stop = () => { clearTimeout(timer); };
+    btn.addEventListener('pointerdown', start);
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach(t => btn.addEventListener(t, stop));
+    btn.addEventListener('click', () => { if (!held) zoomCenter(FSV.zoom + dir * ZOOM_STEP); held = false; });
+    btn.addEventListener('contextmenu', e => e.preventDefault());   // 長按時不跳出選單
+  };
+  holdZoom($('#fsvIn'), 1);
+  holdZoom($('#fsvOut'), -1);
   $('#fsvZoom').addEventListener('click', () => setZoom(1));
   $('#fsvPrev').addEventListener('click', () => stepSong(-1));
   $('#fsvNext').addEventListener('click', () => stepSong(1));
@@ -1260,8 +1273,7 @@ function renderMe() {
     </section>
     ${up.length ? '<div class="me-sec">接下來</div>' + up.map((it, i) => card(it, i === 0, false)).join('') : ''}
     ${past.length ? `<div class="me-sec">最近 7 天</div>` + past.map(it => card(it, false, true)).join('') : ''}
-    ${!shown.length ? '<div class="card empty">近期沒有排到你的服事。<br>若姓名寫法不同（例如暱稱），請用「問題回報」告訴同工。</div>' : ''}
-    <button class="foot-report" data-report>回報問題或建議</button>`;
+    ${!shown.length ? '<div class="card empty">近期沒有排到你的服事。<br>若姓名寫法不同（例如暱稱），請用右上角「問題回報」告訴同工。</div>' : ''}`;
 }
 
 function meStateHTML() {
@@ -1410,8 +1422,7 @@ function renderSetlist() {
       <div><div class="when">練習清單</div><span class="type">曲目查詢｜${songs.length} 首</span></div>
       <button class="back-btn" data-lib-act="back">‹ 返回選歌</button>
     </section>
-    ${playerHTML()}
-    <button class="foot-report" data-report>回報問題或建議</button>`;
+    ${playerHTML()}`;
   renderMode();
   setSong(0, false);
 }
@@ -1426,6 +1437,11 @@ function toggleLibSong(name) {
 }
 
 /* ═════════════ 事件 ═════════════ */
+$('#topReport').innerHTML = ICON.report + '問題回報';
+$('#topReport').addEventListener('click', () => {
+  if (!S.data) return;
+  openReport(S.site !== '個人' && S.view.length ? P.cur : null);
+});
 /** 切換頁籤時回到預設：不循環、詞／譜隱藏（歌曲回到第一首、服事名單收合，由重新繪製處理） */
 function resetControls() { P.mode = 'none'; P.panel = 'none'; if (FSV.open) closeViewer(); }
 
