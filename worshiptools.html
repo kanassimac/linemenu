@@ -245,7 +245,7 @@
   .setlist-head .when { font-size: calc(20px * var(--fz)); }
   .back-btn { flex: 0 0 auto; height: 38px; padding: 0 12px; border-radius: 10px; font-size: 14px; font-weight: 700; color: var(--blue); background: var(--blue-lt); }
 
-  /* ── 問題回報 ── */
+  /* ── 使用回饋 ── */
   .mask { position: fixed; inset: 0; z-index: 70; display: flex; align-items: flex-end; justify-content: center; background: rgba(15,20,30,.45); }
   .sheet { width: 100%; max-width: 560px; max-height: 92vh; overflow-y: auto; padding: 18px 16px;
            padding-bottom: max(18px, env(safe-area-inset-bottom)); border-radius: 18px 18px 0 0; background: var(--white); }
@@ -260,6 +260,9 @@
   .field select, .field textarea { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1.5px solid var(--gray-2);
                                    font: inherit; font-size: 16px; color: var(--black); background: var(--white); }
   .field textarea { resize: vertical; min-height: 110px; }
+  .field select:disabled { color: var(--gray-4); background: var(--gray-1); }
+  .field .need { margin-left: 4px; color: #d64536; }
+  .rtypes.warn button { border-color: #d64536; }
   .hint { margin-bottom: 12px; font-size: 12px; color: var(--gray-4); }
   .submit { width: 100%; height: 48px; border-radius: 12px; font-size: 16px; font-weight: 800; color: var(--white); background: var(--blue); }
   .submit:disabled { opacity: .5; }
@@ -276,7 +279,7 @@
     <button data-fz="1">中</button>
     <button data-fz="1.15">大</button>
     <button data-fz="1.3">特大</button>
-    <button class="top-report" id="topReport" aria-label="問題回報"></button>
+    <button class="top-report" id="topReport" aria-label="使用回饋"></button>
   </div>
   <nav class="tabs">
     <button class="tab" data-site="本堂">本堂</button>
@@ -296,25 +299,29 @@
 
 <div class="mask" id="report" hidden>
   <form class="sheet" id="reportForm" autocomplete="off">
-    <div class="sheet-head">問題回報<button type="button" id="rClose" aria-label="關閉">×</button></div>
-    <div class="ctx" id="rCtx"></div>
+    <div class="sheet-head">使用回饋<button type="button" id="rClose" aria-label="關閉">×</button></div>
+    <div class="ctx">歌詞、歌譜、場次有誤或使用建議，都歡迎告訴我們</div>
     <div class="field">
-      <label>問題類型</label>
+      <label>1. 問題類型<span class="need">必選</span></label>
       <div class="rtypes" id="rType">
-        <button type="button" class="on">歌詞錯誤</button>
+        <button type="button">歌詞錯誤</button>
         <button type="button">歌譜問題</button>
         <button type="button">影片無法播放</button>
-        <button type="button">排班資料</button>
-        <button type="button">頁面操作</button>
+        <button type="button">場次資訊</button>
+        <button type="button">使用建議</button>
         <button type="button">其他</button>
       </div>
     </div>
     <div class="field">
-      <label for="rSong">相關歌曲</label>
-      <select id="rSong"></select>
+      <label for="rSvc">2. 場次</label>
+      <select id="rSvc"></select>
     </div>
     <div class="field">
-      <label for="rText">說明</label>
+      <label for="rSong">3. 歌曲</label>
+      <select id="rSong" disabled></select>
+    </div>
+    <div class="field">
+      <label for="rText">4. 說明<span class="need">必填</span></label>
       <textarea id="rText" maxlength="500" placeholder="例如：第二段副歌少了一句"></textarea>
     </div>
     <p class="hint" id="rHint"></p>
@@ -342,7 +349,7 @@
 <script>
 /* ═════════════ 設定 ═════════════ */
 const API_URL = 'https://script.google.com/macros/s/AKfycbxyV_3V66PKFx7n4284C17_kDQbBsjT8qptrG1uBMGBeo1ZwGbiqmXoEIymw6BMz9Q/exec';   // GAS 部署網址
-const LIFF_ID = '2007843015-jGJQsDWB';             // LINE 分享、問題回報傳到官方帳號聊天室
+const LIFF_ID = '2007843015-jGJQsDWB';             // LINE 登入與分享；使用回饋附上身分憑證
 const SUNDAY_SWITCH_HOUR = 13;                     // 主日當天幾點後切換到下一週
 const OTHER_SWITCH_HOUR = 22;                      // 非主日聚會當天幾點後視為結束
 const SITE_PARAM = { main: '本堂', xinxiu: '新秀', me: '個人', lib: '曲目' };
@@ -1122,15 +1129,66 @@ async function share(i) {
 let liffOK = false;                                    // liff.init 成功後才使用 LINE 功能
 function inLINE() { return liffOK && liff.isInClient(); }
 
-/* ═════════════ 問題回報 ═════════════ */
-let rType = '歌詞錯誤';
-function openReport(songIdx) {
-  const s = currentService();
-  $('#rCtx').textContent = s ? `${S.site}｜${md(s.date)}（${WD[toDate(s.date).getDay()]}）${s.label}` : S.site;
-  $('#rSong').innerHTML = '<option value="">不限定歌曲</option>' +
-    S.view.map((v, i) => `<option value="${i}">${esc(v.title)}${v.type === 'response' ? '（回應）' : ''}</option>`).join('');
-  if (songIdx != null) $('#rSong').value = songIdx;
-  $('#rHint').textContent = '回報會記錄給教會同工處理，謝謝你的協助。';
+/* ═════════════ 使用回饋 ═════════════ */
+const SONG_TYPES = ['歌詞錯誤', '歌譜問題'];         // 這兩種類型才需要指定歌曲
+const RF_PAST_DAYS = 14;                               // 場次選單：列出過去 2 週與所有未來場次
+let rType = '';
+
+/** 場次選單的所有場次：本堂、新秀分組，依日期排序 */
+function reportServices() {
+  const from = ymdOf(new Date(Date.now() - RF_PAST_DAYS * 86400000));
+  return ['本堂', '新秀'].map(site => ({
+    site,
+    list: (S.data.sites[site] || []).filter(s => s.date >= from)
+  })).filter(g => g.list.length);
+}
+function svcLabel(s) { return `${md(s.date)}（${WD[toDate(s.date).getDay()]}）${s.label}`; }
+function selectedService() {
+  const v = $('#rSvc').value;
+  if (!v) return null;
+  const [site, date] = v.split('|');
+  const s = (S.data.sites[site] || []).find(x => x.date === date);
+  return s ? { site, s } : null;
+}
+function songTitle(it) {
+  const info = S.data.songs[it.key];
+  return (info && info.title) || it.name;
+}
+
+/** 依「問題類型」與「場次」決定歌曲選單是否可用 */
+function refreshSongField() {
+  const sel = $('#rSong');
+  const pick = selectedService();
+  if (!SONG_TYPES.includes(rType)) {
+    sel.innerHTML = '<option value="">' + (rType ? '此類型不需選擇歌曲' : '請先選擇問題類型') + '</option>';
+    sel.disabled = true;
+  } else if (!pick) {
+    sel.innerHTML = '<option value="">請先選擇場次</option>';
+    sel.disabled = true;
+  } else if (!pick.s.songs.length) {
+    sel.innerHTML = '<option value="">此場次尚未排歌單</option>';
+    sel.disabled = true;
+  } else {
+    sel.innerHTML = '<option value="">選擇歌曲（可不選）</option>' + pick.s.songs.map((it, i) =>
+      `<option value="${i}">${esc(songTitle(it))}${it.type === 'response' ? '（回應）' : ''}</option>`).join('');
+    sel.disabled = false;
+  }
+}
+
+function setType(name) {
+  rType = name;
+  $('#rType').classList.remove('warn');
+  $('#rType').querySelectorAll('button').forEach(x => x.classList.toggle('on', x.textContent === name));
+  refreshSongField();
+}
+
+function openReport() {
+  $('#rSvc').innerHTML = '<option value="">指定場次</option>' + reportServices().map(g =>
+    `<optgroup label="${g.site}">` +
+    g.list.map(s => `<option value="${g.site}|${s.date}">${g.site}｜${esc(svcLabel(s))}</option>`).join('') +
+    '</optgroup>').join('');
+  setType('');
+  $('#rHint').textContent = '回饋會記錄給教會同工處理，謝謝你的協助。';
   $('#rSubmit').disabled = false; $('#rSubmit').textContent = '送出';
   $('#report').hidden = false;
   document.body.style.overflow = 'hidden';
@@ -1141,15 +1199,20 @@ function closeReport() {
 }
 async function submitReport(e) {
   e.preventDefault();
+  if (!rType) {
+    $('#rType').classList.add('warn');
+    toast('請先選擇問題類型');
+    return;
+  }
   const content = $('#rText').value.trim();
-  if (!content) { $('#rText').focus(); return; }
-  const s = currentService();
-  const v = S.view[$('#rSong').value];
-  const song = v ? v.name : '';
+  if (!content) { $('#rText').focus(); toast('請填寫說明'); return; }
+  const pick = selectedService();
+  const it = pick && !$('#rSong').disabled ? pick.s.songs[$('#rSong').value] : null;
+  const song = it ? it.name : '';
   const btn = $('#rSubmit');
   btn.disabled = true; btn.textContent = '送出中…';
 
-  // 回報只寫入試算表；附上 LINE 身分憑證，由 GAS 驗證後記下回報者（不需額外授權）
+  // 回饋只寫入試算表；附上 LINE 身分憑證，由 GAS 驗證後記下回饋者（不需額外授權）
   let idToken = '';
   try { if (liffOK && liff.isLoggedIn()) idToken = liff.getIDToken() || ''; } catch (err) {}
   let logged = false, why = '';
@@ -1157,7 +1220,7 @@ async function submitReport(e) {
     // text/plain 不會觸發 CORS 預檢，GAS 可以直接接收
     const res = await fetch(API_URL, {
       method: 'POST',
-      body: JSON.stringify({ action: 'report', idToken, site: S.site, date: s ? s.date : '', song, type: rType, text: content, via: inLINE() ? 'LINE' : '網頁', page: location.href })
+      body: JSON.stringify({ action: 'report', idToken, site: pick ? pick.site : '', date: pick ? pick.s.date : '', song, type: rType, text: content, via: inLINE() ? 'LINE' : '網頁', page: location.href })
     });
     const raw = await res.text();
     try {
@@ -1178,7 +1241,7 @@ async function submitReport(e) {
   }
   $('#rText').value = '';
   closeReport();
-  toast('已送出，謝謝你的回報');
+  toast('已送出，謝謝你的回饋');
 }
 
 let toastTimer = 0;
@@ -1273,7 +1336,7 @@ function renderMe() {
     </section>
     ${up.length ? '<div class="me-sec">接下來</div>' + up.map((it, i) => card(it, i === 0, false)).join('') : ''}
     ${past.length ? `<div class="me-sec">最近 7 天</div>` + past.map(it => card(it, false, true)).join('') : ''}
-    ${!shown.length ? '<div class="card empty">近期沒有排到你的服事。<br>若姓名寫法不同（例如暱稱），請用右上角「問題回報」告訴同工。</div>' : ''}`;
+    ${!shown.length ? '<div class="card empty">近期沒有排到你的服事。<br>若姓名寫法不同（例如暱稱），請用右上角「使用回饋」告訴同工。</div>' : ''}`;
 }
 
 function meStateHTML() {
@@ -1437,10 +1500,10 @@ function toggleLibSong(name) {
 }
 
 /* ═════════════ 事件 ═════════════ */
-$('#topReport').innerHTML = ICON.report + '問題回報';
+$('#topReport').innerHTML = ICON.report + '使用回饋';
 $('#topReport').addEventListener('click', () => {
   if (!S.data) return;
-  openReport(S.site !== '個人' && S.view.length ? P.cur : null);
+  openReport();
 });
 /** 切換頁籤時回到預設：不循環、詞／譜隱藏（歌曲回到第一首、服事名單收合，由重新繪製處理） */
 function resetControls() { P.mode = 'none'; P.panel = 'none'; if (FSV.open) closeViewer(); }
@@ -1500,7 +1563,7 @@ $('#main').addEventListener('click', e => {
   }
   const ls = e.target.closest('[data-lib]');
   if (ls) return toggleLibSong(ls.dataset.lib);
-  if (e.target.closest('[data-report]')) return openReport(S.site !== '個人' && S.view.length ? P.cur : null);
+  if (e.target.closest('[data-report]')) return openReport();
   if (e.target.closest('#rosterBtn')) {
     const btn = $('#rosterBtn'), box = $('#roster');
     box.hidden = !box.hidden; btn.classList.toggle('open', !box.hidden);
@@ -1533,10 +1596,9 @@ $('#rClose').addEventListener('click', closeReport);
 $('#report').addEventListener('click', e => { if (e.target.id === 'report') closeReport(); });
 $('#rType').addEventListener('click', e => {
   const b = e.target.closest('button');
-  if (!b) return;
-  rType = b.textContent;
-  $('#rType').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+  if (b) setType(b.textContent);
 });
+$('#rSvc').addEventListener('change', refreshSongField);
 $('#reportForm').addEventListener('submit', submitReport);
 
 /* ═════════════ 啟動 ═════════════ */
