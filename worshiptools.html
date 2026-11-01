@@ -99,15 +99,15 @@
   .btn.txt { flex: 1; color: var(--blue); background: var(--blue-lt); }
   .btn.txt.on { color: var(--white); background: var(--blue); }
   .btn.txt.na:not(.on) { color: var(--gray-3); background: var(--gray-1); }
-  .btn.panel-btn { gap: 4px; }
-  .btn.panel-btn .sep { opacity: .45; font-weight: 400; }
+  .btn.panel-btn { gap: 0; }
+  .btn.panel-btn .sep { margin: 0 1px; opacity: .45; font-weight: 400; }
   .btn.panel-btn.on .w { opacity: .55; font-weight: 500; }
   .btn.panel-btn.on .w.act { opacity: 1; font-weight: 800; }
   .btn.share { width: 42px; flex: 0 0 auto; color: var(--white); background: var(--green); }
   .btn.yt { width: 42px; flex: 0 0 auto; color: #d64536; background: #fdecea; }
   .btn.yt:disabled { opacity: .35; }
   @media (max-width: 410px) { .ctrls { gap: 4px; } .btn.mode { width: 44px; } .btn.share, .btn.yt { width: 40px; } }   /* 一般手機：按鈕略縮，留空間給「詞／譜」 */
-  @media (max-width: 374px) { .btn.nav { width: 34px; } .btn.mode { width: 42px; } .btn.share, .btn.yt { width: 36px; } .btn.panel-btn { font-size: 14px; gap: 1px; padding: 0 2px; } }
+  @media (max-width: 374px) { .btn.nav { width: 34px; } .btn.mode { width: 42px; } .btn.share, .btn.yt { width: 36px; } .btn.panel-btn { font-size: 14px; padding: 0 2px; } }
   .btn.panel-btn { min-width: 0; padding: 0 4px; white-space: nowrap; }
   .btn.panel-btn .s { display: none; }
   @media (max-width: 410px) {                      /* 一般手機寬度：「歌詞／歌譜」改顯示「詞／譜」，避免文字被切掉 */
@@ -153,6 +153,11 @@
   .fsv-scroll { flex: 1; overflow: auto; -webkit-overflow-scrolling: touch; background: #fff; touch-action: pan-x pan-y; }
   .fsv-pages { width: 100%; }
   .fsv-pages img { display: block; width: 100%; height: auto; border-bottom: 1px solid var(--gray-2); }
+  .fsv-lyr { padding: 18px 20px 48px; color: var(--black); line-height: 1.85; }
+  #fsvPages .fsv-lyr { font-size: inherit; }
+  .fsv-lyr .sec { font-size: .6em; }
+  .fsv-lyr .gap { height: .5em; }
+  .fsv-ltitle { margin-bottom: .3em; font-size: .8em; font-weight: 800; color: var(--gray-4); }
   .fsv-msg { padding: 40px 20px; text-align: center; font-size: 15px; color: var(--gray-4); }
   .fsv-foot { display: flex; align-items: center; gap: 8px; padding: 8px 10px; padding-bottom: max(8px, env(safe-area-inset-bottom)); color: #fff; }
   .fsv-foot button { flex: 1; height: 44px; border-radius: 12px; font-size: 15px; font-weight: 800; color: #fff; background: rgba(255,255,255,.14); }
@@ -626,7 +631,7 @@ function playerHTML() {
         <button class="btn ic" id="bPlay" aria-label="播放或暫停">${ICON.play}</button>
         <button class="btn nav" id="bNext" aria-label="下一首">${ICON.next}</button>
         <button class="btn mode" id="bMode" aria-label="循環模式"></button>
-        <button class="btn txt panel-btn" id="bPanel" aria-label="顯示歌詞或歌譜"><span class="w" data-w="lyr"><span class="l">歌詞</span><span class="s">詞</span></span><span class="sep">／</span><span class="w" data-w="sheet"><span class="l">歌譜</span><span class="s">譜</span></span></button>
+        <button class="btn txt panel-btn" id="bPanel" aria-label="顯示歌詞或歌譜"><span class="w" data-w="lyr"><span class="l">歌詞</span><span class="s">詞</span></span><span class="sep">/</span><span class="w" data-w="sheet"><span class="l">歌譜</span><span class="s">譜</span></span></button>
         <button class="btn share" id="bShare" aria-label="分享">${ICON.share}</button>
         <button class="btn yt" id="bYT" aria-label="在 YouTube 連播"${S.view.some(v => v.vid) ? '' : ' disabled'}>${ICON.ytlist}</button>
       </div>
@@ -666,7 +671,7 @@ function setSong(i, play) {
   if (FSV.open) setTimeout(renderViewer, 0);
   $('#bPlay').classList.toggle('dim', !v.vid);
   $('#bPrev').disabled = i === 0;
-  $('#bNext').disabled = i === S.view.length - 1;
+  $('#bNext').disabled = S.view.length < 2;
   $('#bPanel').classList.toggle('na', !v.lyrics && !v.sheets.length);
   renderPanels();
 
@@ -797,7 +802,7 @@ function renderPanels() {
 
   lp.hidden = P.panel !== 'lyr';
   if (P.panel === 'lyr') {
-    lp.innerHTML = `<div class="panel-head"><span>歌詞｜${esc(v.title)}</span></div>` +
+    lp.innerHTML = `<div class="panel-head"><span>歌詞｜${esc(v.title)}</span>${v.lyrics ? '<button class="fs-btn" data-fsl>⛶ 全螢幕</button>' : ''}</div>` +
       (v.lyrics ? `<div class="lyr-body">${lyricsHTML(v.lyrics)}</div>` : '<div class="panel-empty">這首歌沒有歌詞資料</div>');
   }
 
@@ -931,11 +936,16 @@ async function loadSheet(i) {
  * 在 LIFF 內以全螢幕顯示，不跳出到外部瀏覽器
  * 可切換調性、上一首／下一首；雙指縮放、點兩下放大、＋／－ 按鈕
  */
-const FSV = { open: false, zoom: 1, token: 0 };
-const ZOOM_MIN = 1, ZOOM_MAX = 4;
+const FSV = { open: false, kind: 'sheet', zoom: 1, lzoom: +readPref('lyrzoom') || 1, token: 0 };
+const ZOOM_MIN = 1, ZOOM_MAX = 4;                     // 歌譜：100%～400%
+const LYR_MIN = 0.6, LYR_MAX = 3, LYR_BASE = 22;      // 歌詞：字級 60%～300%（100% = 22px）
+const zLim = () => FSV.kind === 'lyr' ? [LYR_MIN, LYR_MAX] : [ZOOM_MIN, ZOOM_MAX];
 
-function openViewer() {
-  FSV.open = true; FSV.zoom = 1;
+/** kind：'sheet' 歌譜、'lyr' 歌詞 */
+function openViewer(kind) {
+  FSV.open = true; FSV.kind = kind === 'lyr' ? 'lyr' : 'sheet';
+  FSV.zoom = FSV.kind === 'lyr' ? FSV.lzoom : 1;
+  $('#fsv').classList.toggle('lyr', FSV.kind === 'lyr');
   $('#fsv').hidden = false;
   document.body.style.overflow = 'hidden';
   renderViewer();
@@ -948,13 +958,25 @@ function closeViewer() {
 function renderViewer() {
   if (!FSV.open) return;
   const i = P.cur, v = S.view[i], sh = v && curSheet(v), tk = ++FSV.token;
+  if (FSV.kind === 'lyr') {                          // 歌詞：沒有調性選擇，字級沿用上次的設定
+    $('#fsvKeys').innerHTML = ''; $('#fsvKeys').hidden = true;
+    $('#fsvCount').textContent = `${i + 1} / ${S.view.length}`;
+    $('#fsvPrev').disabled = i === 0;
+    $('#fsvNext').disabled = S.view.length < 2;
+    $('#fsvPages').innerHTML = v.lyrics
+      ? `<div class="lyr-body fsv-lyr"><div class="fsv-ltitle">${esc(v.title)}</div>${lyricsHTML(v.lyrics)}</div>`
+      : '<div class="fsv-msg">這首歌沒有歌詞資料</div>';
+    setZoom(FSV.zoom);
+    const sc = $('#fsvScroll'); sc.scrollTop = 0; sc.scrollLeft = 0;
+    return;
+  }
   $('#fsvKeys').innerHTML = v.sheets.length > 1
     ? v.sheets.map(x => `<button class="kchip ${sh && x.driveId === sh.driveId ? 'on' : ''}" data-fsv-key="${esc(x.driveId)}">${x.key ? esc(x.key) : '原版'}</button>`).join('')
     : '';
   $('#fsvKeys').hidden = v.sheets.length < 2;
   $('#fsvCount').textContent = `${i + 1} / ${S.view.length}`;
   $('#fsvPrev').disabled = i === 0;
-  $('#fsvNext').disabled = i === S.view.length - 1;
+  $('#fsvNext').disabled = S.view.length < 2;
   setZoom(1);
   const sc = $('#fsvScroll'); sc.scrollTop = 0; sc.scrollLeft = 0;
   const box = $('#fsvPages');
@@ -965,11 +987,20 @@ function renderViewer() {
     err => { if (tk === FSV.token) box.innerHTML = `<div class="fsv-msg">歌譜無法顯示（${esc(err.message)}）</div>`; });
 }
 function setZoom(z) {
-  FSV.zoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, Math.round(z * 100) / 100));
-  $('#fsvPages').style.width = (FSV.zoom * 100) + '%';
+  const [lo, hi] = zLim();
+  FSV.zoom = Math.max(lo, Math.min(hi, Math.round(z * 100) / 100));
+  const pg = $('#fsvPages');
+  if (FSV.kind === 'lyr') {                          // 歌詞：調整字級（文字自動換行，不需左右捲動）
+    pg.style.width = '100%';
+    pg.style.fontSize = (LYR_BASE * FSV.zoom) + 'px';
+    FSV.lzoom = FSV.zoom; writePref('lyrzoom', FSV.zoom);
+  } else {                                           // 歌譜：調整圖片寬度
+    pg.style.width = (FSV.zoom * 100) + '%';
+    pg.style.fontSize = '';
+  }
   $('#fsvZoom').textContent = Math.round(FSV.zoom * 100) + '%';
-  $('#fsvOut').disabled = FSV.zoom <= ZOOM_MIN;
-  $('#fsvIn').disabled = FSV.zoom >= ZOOM_MAX;
+  $('#fsvOut').disabled = FSV.zoom <= lo;
+  $('#fsvIn').disabled = FSV.zoom >= hi;
 }
 /** 以畫面上的某一點為中心縮放（雙指、點兩下時，手指下的位置保持不動） */
 function zoomAt(z, cx, cy) {
@@ -984,6 +1015,7 @@ function zoomCenter(z) { const r = $('#fsvScroll').getBoundingClientRect(); zoom
 (function bindViewer() {
   const sc = $('#fsvScroll');
   let pinch = null, lastTap = 0;
+  const dblZoom = () => FSV.kind === 'lyr' ? (FSV.zoom > 1.2 ? 1 : 1.5) : (FSV.zoom > 1.2 ? 1 : 2);   // 點兩下：放大／還原
   const dist = (t) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
   sc.addEventListener('touchstart', e => {
     if (e.touches.length === 2) pinch = { d: dist(e.touches), z: FSV.zoom };
@@ -998,27 +1030,27 @@ function zoomCenter(z) { const r = $('#fsvScroll').getBoundingClientRect(); zoom
     if (e.touches.length < 2) pinch = null;
     if (e.touches.length === 0 && e.changedTouches.length === 1) {
       const now = Date.now(), t = e.changedTouches[0];
-      if (now - lastTap < 300) { zoomAt(FSV.zoom > 1.2 ? 1 : 2, t.clientX, t.clientY); lastTap = 0; }   // 點兩下：放大／還原
+      if (now - lastTap < 300) { zoomAt(dblZoom(), t.clientX, t.clientY); lastTap = 0; }   // 點兩下：放大／還原
       else lastTap = now;
     }
   });
-  sc.addEventListener('dblclick', e => zoomAt(FSV.zoom > 1.2 ? 1 : 2, e.clientX, e.clientY));
+  sc.addEventListener('dblclick', e => zoomAt(dblZoom(), e.clientX, e.clientY));
   $('#fsvClose').addEventListener('click', closeViewer);
-  // ＋／－：按一下增減 1%；按住不放會連續調整，越按越快
-  const ZOOM_STEP = 0.01;
+  // ＋／－：歌譜按一下增減 1%、歌詞增減 5%；按住不放會連續調整，越按越快
+  const zStep = () => FSV.kind === 'lyr' ? 0.05 : 0.01;
   const holdZoom = (btn, dir) => {
     let timer = 0, n = 0, held = false;
-    const tick = () => { held = true; zoomCenter(FSV.zoom + dir * ZOOM_STEP * (n < 10 ? 1 : n < 30 ? 3 : 5)); n++; timer = setTimeout(tick, 60); };
+    const tick = () => { held = true; zoomCenter(FSV.zoom + dir * zStep() * (n < 10 ? 1 : n < 30 ? 3 : 5)); n++; timer = setTimeout(tick, 60); };
     const start = (e) => { e.preventDefault(); n = 0; held = false; timer = setTimeout(tick, 350); };
     const stop = () => { clearTimeout(timer); };
     btn.addEventListener('pointerdown', start);
     ['pointerup', 'pointerleave', 'pointercancel'].forEach(t => btn.addEventListener(t, stop));
-    btn.addEventListener('click', () => { if (!held) zoomCenter(FSV.zoom + dir * ZOOM_STEP); held = false; });
+    btn.addEventListener('click', () => { if (!held) zoomCenter(FSV.zoom + dir * zStep()); held = false; });
     btn.addEventListener('contextmenu', e => e.preventDefault());   // 長按時不跳出選單
   };
   holdZoom($('#fsvIn'), 1);
   holdZoom($('#fsvOut'), -1);
-  $('#fsvZoom').addEventListener('click', () => setZoom(1));
+  $('#fsvZoom').addEventListener('click', () => zoomCenter(1));
   $('#fsvPrev').addEventListener('click', () => stepSong(-1));
   $('#fsvNext').addEventListener('click', () => stepSong(1));
   $('#fsvKeys').addEventListener('click', e => {
@@ -1085,8 +1117,9 @@ function cyclePanel() {
 
 /** 上一首／下一首：正在播放就接著播新的一首；歌詞、歌譜保持顯示，畫面不捲動 */
 function stepSong(d) {
-  const n = P.cur + d;
-  if (n < 0 || n >= S.view.length) return;
+  let n = P.cur + d;
+  if (n >= S.view.length) n = 0;                       // 最後一首按「下一首」→ 回到第一首
+  if (n < 0 || n === P.cur) return;
   let playing = false;
   try { playing = !!(P.player && P.ready && P.player.getPlayerState() === YT.PlayerState.PLAYING); } catch (e) {}
   P.auto = false;
@@ -1626,7 +1659,8 @@ $('#main').addEventListener('click', e => {
   if (e.target.closest('#bPanel')) { cyclePanel(); return; }
   if (e.target.closest('#bShare')) return share(P.cur);
   if (e.target.closest('#bYT')) return openYTDlg();
-  if (e.target.closest('[data-fsv]') || e.target.closest('#sheetPages img')) return openViewer();
+  if (e.target.closest('[data-fsv]') || e.target.closest('#sheetPages img')) return openViewer('sheet');
+  if (e.target.closest('[data-fsl]')) return openViewer('lyr');
   const kc = e.target.closest('[data-sv]');
   if (kc) { SHEET_SEL[S.view[P.cur].name] = kc.dataset.sv; renderPanels(); return; }
 
