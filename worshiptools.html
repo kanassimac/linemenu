@@ -86,34 +86,32 @@
   .cover a { color: #fff; font-weight: 700; padding: 7px 14px; border-radius: 8px; background: rgba(255,255,255,.18); text-decoration: none; }
 
   .card.player { overflow: visible; }              /* 讓控制列可以固定在畫面上方 */
-  .ctrls { display: flex; gap: 6px; margin: 4px -16px 0; padding: 8px 16px; position: sticky; top: var(--top-h, 0px); z-index: 20;
+  .ctrls { margin: 4px -16px 0; padding: 8px 16px; position: sticky; top: var(--top-h, 0px); z-index: 20;
            background: #fff; border-radius: 0 0 12px 12px; }
   .ctrls.stuck { box-shadow: 0 6px 10px -6px rgba(26,33,48,.18); }
-  .btn { height: 46px; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 15px; font-weight: 700; }
-  .btn.ic { width: 46px; flex: 0 0 auto; color: var(--white); background: var(--blue); }
-  .btn.nav { width: 38px; flex: 0 0 auto; color: var(--blue); background: var(--blue-lt); }
+  /* 控制列分兩排：第一排 上一首／播放／下一首／循環模式；第二排 歌詞／歌譜、分享、YouTube */
+  .crow { display: flex; gap: 8px; }
+  .crow .btn { flex-basis: 0 !important; padding: 0 6px; }        /* 同一排按鈕等寬，不受文字長短影響 */
+  .crow + .crow { margin-top: 8px; }
+  .btn { height: 46px; min-width: 0; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 15px; font-weight: 700; white-space: nowrap; }
+  .btn.ic { flex: 1; color: var(--white); background: var(--blue); }
+  .btn.nav { flex: 1; color: var(--blue); background: var(--blue-lt); }
   .btn.nav:disabled { opacity: .35; }
-  .btn.mode { width: 48px; flex: 0 0 auto; flex-direction: column; gap: 0; line-height: 1; color: var(--gray-4); background: var(--gray-2); }
-  .btn.mode small { font-size: 10px; font-weight: 700; margin-top: 3px; }
+  .btn.mode { flex: 1; gap: 5px; font-size: 14px; color: var(--gray-4); background: var(--gray-2); }
   .btn.mode.on { color: var(--white); background: var(--blue); }
   .btn.txt { flex: 1; color: var(--blue); background: var(--blue-lt); }
   .btn.txt.on { color: var(--white); background: var(--blue); }
   .btn.txt.na:not(.on) { color: var(--gray-3); background: var(--gray-1); }
   .btn.panel-btn { gap: 0; }
-  .btn.panel-btn .sep { margin: 0 1px; opacity: .45; font-weight: 400; }
+  .btn.panel-btn .sep { margin: 0 2px; opacity: .45; font-weight: 400; }
   .btn.panel-btn.on .w { opacity: .55; font-weight: 500; }
   .btn.panel-btn.on .w.act { opacity: 1; font-weight: 800; }
-  .btn.share { width: 42px; flex: 0 0 auto; color: var(--white); background: var(--green); }
-  .btn.yt { width: 42px; flex: 0 0 auto; color: #d64536; background: #fdecea; }
-  .btn.yt:disabled { opacity: .35; }
-  @media (max-width: 410px) { .ctrls { gap: 4px; } .btn.mode { width: 44px; } .btn.share, .btn.yt { width: 40px; } }   /* 一般手機：按鈕略縮，留空間給「詞／譜」 */
-  @media (max-width: 374px) { .btn.nav { width: 34px; } .btn.mode { width: 42px; } .btn.share, .btn.yt { width: 36px; } .btn.panel-btn { font-size: 14px; padding: 0 2px; } }
-  .btn.panel-btn { min-width: 0; padding: 0 4px; white-space: nowrap; }
   .btn.panel-btn .s { display: none; }
-  @media (max-width: 410px) {                      /* 一般手機寬度：「歌詞／歌譜」改顯示「詞／譜」，避免文字被切掉 */
-    .btn.panel-btn .l { display: none; }
-    .btn.panel-btn .s { display: inline; }
-  }
+  .btn.share { flex: 1; color: var(--white); background: var(--green); }
+  .btn.yt { flex: 1; color: #d64536; background: #fdecea; }
+  .btn.yt:disabled { opacity: .35; }
+  .btn .lbl { font-size: 14px; }
+  @media (max-width: 374px) { .crow { gap: 6px; } .btn .lbl, .btn.mode { font-size: 13px; } .btn { gap: 4px; } }
   .btn.dim { opacity: .4; }
 
   .panel { margin-top: 10px; border-radius: 12px; border: 1px solid var(--gray-2); overflow: hidden; }
@@ -627,13 +625,17 @@ function playerHTML() {
     <section class="card player" id="player">
       <div class="media" id="media"><div id="ytBox"></div><div class="cover" id="cover"></div></div>
       <div class="ctrls">
+       <div class="crow">
         <button class="btn nav" id="bPrev" aria-label="上一首">${ICON.prev}</button>
         <button class="btn ic" id="bPlay" aria-label="播放或暫停">${ICON.play}</button>
         <button class="btn nav" id="bNext" aria-label="下一首">${ICON.next}</button>
         <button class="btn mode" id="bMode" aria-label="循環模式"></button>
+       </div>
+       <div class="crow">
         <button class="btn txt panel-btn" id="bPanel" aria-label="顯示歌詞或歌譜"><span class="w" data-w="lyr"><span class="l">歌詞</span><span class="s">詞</span></span><span class="sep">/</span><span class="w" data-w="sheet"><span class="l">歌譜</span><span class="s">譜</span></span></button>
-        <button class="btn share" id="bShare" aria-label="分享">${ICON.share}</button>
-        <button class="btn yt" id="bYT" aria-label="在 YouTube 連播"${S.view.some(v => v.vid) ? '' : ' disabled'}>${ICON.ytlist}</button>
+        <button class="btn share" id="bShare" aria-label="分享歌詞">${ICON.share}<span class="lbl">分享</span></button>
+        <button class="btn yt" id="bYT" aria-label="在 YouTube 連播"${S.view.some(v => v.vid) ? '' : ' disabled'}>${ICON.ytlist}<span class="lbl">YouTube</span></button>
+       </div>
       </div>
       <div class="panel" id="lyrPanel" hidden></div>
       <div class="panel" id="sheetPanel" hidden></div>
@@ -657,7 +659,7 @@ function renderTracks() {
 
 function renderMode() {
   const b = $('#bMode');
-  b.innerHTML = `${ICON[P.mode]}<small>${MODE_LABEL[P.mode]}</small>`;
+  b.innerHTML = `${ICON[P.mode]}<span>${MODE_LABEL[P.mode]}</span>`;
   b.classList.toggle('on', P.mode !== 'none');
 }
 
