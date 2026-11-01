@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>同工打卡</title>
+<script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+  :root {
+    /* 配色集中在這裡，之後可換成電子週報的色票 */
+    --bg: #F4F1EA;
+    --card: #FFFFFF;
+    --ink: #1F2A30;
+    --muted: #6B7378;
+    --line: #E3DED3;
+    --in: #1E5A63;      /* 上班 */
+    --out: #9A5B2E;     /* 下班 */
+    --ok: #2E7D4F;
+    --ok-bg: #E3F1E8;
+    --warn: #A15F00;
+    --warn-bg: #FCEFD9;
+    --err: #B3261E;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  main { max-width: 480px; margin: 0 auto; padding: 20px 16px calc(28px + env(safe-area-inset-bottom)); }
+
+  .date { font-size: 14px; color: var(--muted); }
+  .name { font-size: 22px; font-weight: 700; margin-top: 2px; }
+  .badges { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0 16px; }
+  .badge { font-size: 12px; padding: 4px 10px; border-radius: 999px; background: var(--line); }
+  .badge.ok { background: var(--ok-bg); color: var(--ok); }
+  .badge.warn { background: var(--warn-bg); color: var(--warn); }
+  .badge:empty { display: none; }
+
+  .card { background: var(--card); border-radius: 16px; padding: 22px 18px; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+  .time { font-size: 52px; font-weight: 700; text-align: center; font-variant-numeric: tabular-nums; letter-spacing: 1px; }
+  .sub { text-align: center; color: var(--muted); font-size: 12px; margin-top: 2px; }
+
+  .reason { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
+  .reason[hidden] { display: none; }
+  .reason p { margin: 0 0 10px; font-size: 14px; color: var(--warn); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { border: 1px solid var(--line); background: #fff; color: var(--ink); border-radius: 999px; padding: 8px 14px; font-size: 14px; }
+  .chip.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .note { width: 100%; margin-top: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; font-size: 15px; }
+
+  .punch {
+    display: block; width: 100%; margin-top: 18px; padding: 18px;
+    border: 0; border-radius: 14px; font-size: 20px; font-weight: 700; color: #fff;
+    background: var(--in); transition: opacity .15s;
+  }
+  .punch.out { background: var(--out); }
+  .punch:disabled { opacity: .4; }
+
+  .msg { min-height: 20px; margin: 12px 2px 0; font-size: 14px; }
+  .msg.err { color: var(--err); }
+  .msg.ok { color: var(--ok); }
+  .reload { display: none; margin-top: 8px; border: 1px solid var(--line); background: #fff; border-radius: 10px; padding: 8px 14px; font-size: 14px; }
+
+  h2 { font-size: 14px; color: var(--muted); font-weight: 600; margin: 26px 2px 8px; }
+  .list { list-style: none; margin: 0; padding: 0; }
+  .list li { display: flex; align-items: center; gap: 12px; background: var(--card); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; }
+  .tag { font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 6px; color: #fff; background: var(--in); }
+  .tag.out { background: var(--out); }
+  .t { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .meta { margin-left: auto; font-size: 12px; color: var(--muted); text-align: right; }
+  .meta .flag { color: var(--warn); }
+  .empty { color: var(--muted); font-size: 14px; padding: 6px 2px; }
+</style>
+</head>
+<body>
+<main>
+  <div class="date" id="date">&nbsp;</div>
+  <div class="name" id="name">載入中</div>
+  <div class="badges">
+    <span class="badge" id="dayType"></span>
+    <span class="badge" id="net"></span>
+  </div>
+
+  <section class="card">
+    <div class="time" id="clock">--:--:--</div>
+    <div class="sub">打卡時間以伺服器記錄為準</div>
+
+    <div class="reason" id="reasonBox" hidden>
+      <p>目前不是教會網路，請選擇原因</p>
+      <div class="chips" id="chips"></div>
+      <input class="note" id="note" maxlength="100" placeholder="補充說明（選「其他」時必填）">
+    </div>
+
+    <button class="punch" id="punchBtn" disabled>請稍候</button>
+  </section>
+
+  <p class="msg" id="msg"></p>
+  <button class="reload" id="reloadBtn" onclick="location.reload()">重新載入</button>
+
+  <h2>今日紀錄</h2>
+  <ul class="list" id="list"><li class="empty">尚無紀錄</li></ul>
+</main>
+
+<script>
+  // ===== 設定：部署前請填入 =====
+  const CONFIG = {
+    LIFF_ID:  '請填入LIFF_ID',
+    API_BASE: 'https://staff-attendance.kanassimac-taitung.workers.dev',
+  };
+
+  const $ = id => document.getElementById(id);
+  const WEEK = ['日', '一', '二', '三', '四', '五', '六'];
+  let state = null;
+  let busy = false;
+  let reason = '';
+
+  // 時鐘只是顯示用，實際寫入時間由 GAS 決定
+  function tick() {
+    $('clock').textContent = new Date().toLocaleTimeString('zh-TW', { timeZone: 'Asia/Taipei', hour12: false });
+  }
+
+  function setMsg(text, kind) {
+    $('msg').textContent = text || '';
+    $('msg').className = 'msg ' + (kind || '');
+  }
+
+  function formatDate(ymd) {
+    const d = new Date(ymd + 'T00:00:00+08:00');
+    return (d.getMonth() + 1) + ' 月 ' + d.getDate() + ' 日（' + WEEK[d.getDay()] + '）';
+  }
+
+  async function api(path, extra) {
+    const idToken = liff.getIDToken();
+    const res = await fetch(CONFIG.API_BASE + path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(Object.assign({ idToken }, extra || {})),
+    });
+    return res.json();
+  }
+
+  function render() {
+    const s = state;
+    if (!s) return;
+    $('name').textContent = s.name;
+    $('date').textContent = formatDate(s.date);
+
+    const isWorkday = s.dayType === '工作日' || s.dayType === '補班';
+    $('dayType').textContent = s.dayType;
+    $('dayType').className = 'badge ' + (isWorkday ? '' : 'warn');
+
+    const matched = s.network && s.network.matched;
+    $('net').textContent = matched ? '教會網路｜' + s.network.site : '非教會網路';
+    $('net').className = 'badge ' + (matched ? 'ok' : 'warn');
+
+    // 非教會網路：flag 模式顯示原因選擇；block 模式不能打卡
+    const blocked = !matched && s.policy === 'block';
+    $('reasonBox').hidden = matched || blocked;
+    $('chips').innerHTML = '';
+    (s.reasons || []).forEach(r => {
+      const b = document.createElement('button');
+      b.className = 'chip' + (r === reason ? ' on' : '');
+      b.textContent = r;
+      b.onclick = () => { reason = r; render(); };
+      $('chips').appendChild(b);
+    });
+
+    const btn = $('punchBtn');
+    btn.textContent = s.next + '打卡';
+    btn.className = 'punch' + (s.next === '下班' ? ' out' : '');
+    btn.disabled = busy || blocked;
+    if (blocked) setMsg('請連上教會 Wi-Fi 再打卡', 'err');
+
+    const list = $('list');
+    list.innerHTML = '';
+    if (!s.punches || !s.punches.length) {
+      list.innerHTML = '<li class="empty">尚無紀錄</li>';
+      return;
+    }
+    s.punches.forEach(p => {
+      const li = document.createElement('li');
+      const where = p.network === '教會網路' ? p.site : (p.reason || '非教會網路');
+      li.innerHTML =
+        '<span class="tag' + (p.type === '下班' ? ' out' : '') + '">' + p.type + '</span>' +
+        '<span class="t">' + p.time + '</span>' +
+        '<span class="meta">' + escapeHtml(where) +
+        (p.marks ? '<br><span class="flag">' + escapeHtml(p.marks) + '</span>' : '') + '</span>';
+      list.appendChild(li);
+    });
+  }
+
+  function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  function showError(r) {
+    setMsg(r.message || ('發生錯誤：' + r.code), 'err');
+    $('reloadBtn').style.display = (r.code === 'TOKEN_EXPIRED' || r.code === 'TOKEN_INVALID') ? 'inline-block' : 'none';
+  }
+
+  async function refresh() {
+    const r = await api('/api/status');
+    if (!r.ok) {
+      $('name').textContent = '無法載入';
+      showError(r);
+      return;
+    }
+    state = r;
+    render();
+  }
+
+  async function punch() {
+    if (busy || !state) return;
+    const matched = state.network && state.network.matched;
+    const note = $('note').value.trim();
+    if (!matched && !reason) { setMsg('請先選擇原因', 'err'); return; }
+    if (!matched && reason === '其他' && !note) { setMsg('選擇「其他」時請填寫說明', 'err'); return; }
+
+    busy = true;
+    render();
+    setMsg('送出中');
+    try {
+      const r = await api('/api/punch', { type: state.next, reason: matched ? '' : reason, note: matched ? '' : note });
+      if (r.ok) {
+        state = r;
+        reason = '';
+        $('note').value = '';
+        setMsg(r.last.type + '打卡完成　' + r.last.time + (r.last.marks.length ? '（' + r.last.marks.join('、') + '）' : ''), 'ok');
+      } else {
+        showError(r);
+        if (r.code === 'SEQUENCE') await refresh();
+      }
+    } catch (e) {
+      setMsg('網路連線失敗，請稍後再試', 'err');
+    } finally {
+      busy = false;
+      render();
+    }
+  }
+
+  async function main() {
+    tick();
+    setInterval(tick, 1000);
+    $('punchBtn').onclick = punch;
+    try {
+      await liff.init({ liffId: CONFIG.LIFF_ID });
+      if (!liff.isLoggedIn()) { liff.login({ redirectUri: location.href }); return; }
+      await refresh();
+    } catch (e) {
+      $('name').textContent = '無法載入';
+      setMsg('初始化失敗：' + e.message, 'err');
+    }
+  }
+
+  main();
+</script>
+</body>
+</html>
