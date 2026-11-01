@@ -104,6 +104,10 @@
   .btn.panel-btn.on .w { opacity: .55; font-weight: 500; }
   .btn.panel-btn.on .w.act { opacity: 1; font-weight: 800; }
   .btn.share { width: 42px; flex: 0 0 auto; color: var(--white); background: var(--green); }
+  .btn.yt { width: 42px; flex: 0 0 auto; color: #d64536; background: #fdecea; }
+  .btn.yt:disabled { opacity: .35; }
+  @media (max-width: 410px) { .ctrls { gap: 4px; } .btn.mode { width: 44px; } .btn.share, .btn.yt { width: 40px; } }   /* 一般手機：按鈕略縮，留空間給「詞／譜」 */
+  @media (max-width: 374px) { .btn.nav { width: 34px; } .btn.mode { width: 42px; } .btn.share, .btn.yt { width: 36px; } .btn.panel-btn { font-size: 14px; gap: 1px; padding: 0 2px; } }
   .btn.panel-btn { min-width: 0; padding: 0 4px; white-space: nowrap; }
   .btn.panel-btn .s { display: none; }
   @media (max-width: 410px) {                      /* 一般手機寬度：「歌詞／歌譜」改顯示「詞／譜」，避免文字被切掉 */
@@ -266,6 +270,10 @@
   .hint { margin-bottom: 12px; font-size: 12px; color: var(--gray-4); }
   .submit { width: 100%; height: 48px; border-radius: 12px; font-size: 16px; font-weight: 800; color: var(--white); background: var(--blue); }
   .submit:disabled { opacity: .5; }
+  .yt-list { margin: 0 0 14px; padding-left: 20px; font-size: 14px; color: var(--black); }
+  .yt-list li { margin: 2px 0; }
+  .yt-list .skip { color: var(--gray-4); }
+  .yt-go { background: #d64536; }
   .toast { position: fixed; left: 50%; bottom: max(24px, env(safe-area-inset-bottom)); z-index: 80; transform: translateX(-50%);
            padding: 10px 18px; border-radius: 20px; font-size: 14px; color: var(--white); background: rgba(26,33,48,.92); white-space: nowrap; }
 </style>
@@ -296,6 +304,16 @@
 <main id="main">
   <div class="skel"></div><div class="skel" style="height:300px"></div>
 </main>
+
+<div class="mask" id="ytDlg" hidden>
+  <div class="sheet">
+    <div class="sheet-head">YouTube 連播<button type="button" id="ytClose" aria-label="關閉">×</button></div>
+    <p class="ctx">在 YouTube 新增臨時播放清單播放。若你有 YouTube Premium，可使用背景播放或關螢幕播放。</p>
+    <ol class="yt-list" id="ytList"></ol>
+    <p class="hint">若沒有自動進入 YouTube App，請點 YouTube 頁面上的「在 App 中開啟」。</p>
+    <button type="button" class="submit yt-go" id="ytGo">開啟 YouTube</button>
+  </div>
+</div>
 
 <div class="mask" id="report" hidden>
   <form class="sheet" id="reportForm" autocomplete="off">
@@ -373,6 +391,7 @@ const ICON = {
   list: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${LOOP_PATH}</svg>`,
   one: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${LOOP_PATH}<path d="M11 10.5l1.5-1v5" stroke-width="2"/></svg>`,
   none: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${LOOP_PATH}<path d="M4 4l16 16"/></svg>`,
+  ytlist: '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h12M3 11h12M3 16h7"/><path d="M15 14.5v6l5-3z" fill="currentColor"/></svg>',
   share: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18 16c-.8 0-1.5.3-2 .8l-7.3-4.2c.1-.2.1-.4.1-.6s0-.4-.1-.6L16 7.2c.5.5 1.2.8 2 .8 1.7 0 3-1.3 3-3s-1.3-3-3-3-3 1.3-3 3c0 .2 0 .4.1.6L7.8 9.8C7.3 9.3 6.6 9 5.8 9c-1.7 0-3 1.3-3 3s1.3 3 3 3c.8 0 1.5-.3 2-.8l7.3 4.2c-.1.2-.1.4-.1.6 0 1.6 1.3 2.9 2.9 2.9s2.9-1.3 2.9-2.9S19.6 16 18 16z"/></svg>',
   prev: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="2.6" height="14" rx="1"/><path d="M19 5.8v12.4a.8.8 0 0 1-1.2.7L9 12.7a.8.8 0 0 1 0-1.4l8.8-6.2a.8.8 0 0 1 1.2.7z"/></svg>',
   next: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="16.4" y="5" width="2.6" height="14" rx="1"/><path d="M5 5.8v12.4a.8.8 0 0 0 1.2.7l8.8-6.2a.8.8 0 0 0 0-1.4L6.2 5.1A.8.8 0 0 0 5 5.8z"/></svg>',
@@ -468,7 +487,7 @@ function applyFresh(fresh) {
   if (S.site === '曲目') return;                     // 曲目查詢使用自己的資料
   const list = siteList(S.site);
   if (!list.some(s => s.date === S.date)) S.date = defaultDate(list);
-  const busy = !$('#report').hidden || !!P.player || P.panel === 'sheet' || window.scrollY > 200;
+  const busy = !$('#report').hidden || !$('#ytDlg').hidden || !!P.player || P.panel === 'sheet' || window.scrollY > 200;
   if (busy) { toast('資料已更新，切換場次後套用'); return; }
   render();
 }
@@ -609,6 +628,7 @@ function playerHTML() {
         <button class="btn mode" id="bMode" aria-label="循環模式"></button>
         <button class="btn txt panel-btn" id="bPanel" aria-label="顯示歌詞或歌譜"><span class="w" data-w="lyr"><span class="l">歌詞</span><span class="s">詞</span></span><span class="sep">／</span><span class="w" data-w="sheet"><span class="l">歌譜</span><span class="s">譜</span></span></button>
         <button class="btn share" id="bShare" aria-label="分享">${ICON.share}</button>
+        <button class="btn yt" id="bYT" aria-label="在 YouTube 連播"${S.view.some(v => v.vid) ? '' : ' disabled'}>${ICON.ytlist}</button>
       </div>
       <div class="panel" id="lyrPanel" hidden></div>
       <div class="panel" id="sheetPanel" hidden></div>
@@ -1125,6 +1145,31 @@ async function share(i) {
   try { await navigator.clipboard.writeText(text); toast('已複製，可貼到聊天室'); } catch (e) { alert('無法複製，請手動選取歌詞'); }
 }
 
+/* ═════════════ YouTube 臨時播放清單 ═════════════ */
+/** 用這場有影片的歌組成 watch_videos 網址；不需登入、不會存進使用者帳號，每次按都重新產生 */
+function ytListUrl() {
+  const ids = S.view.map(v => v.vid).filter(Boolean);
+  return ids.length ? 'https://www.youtube.com/watch_videos?video_ids=' + ids.join(',') : '';
+}
+function openYTDlg() {
+  $('#ytList').innerHTML = S.view.map(v =>
+    `<li${v.vid ? '' : ' class="skip"'}>${esc(v.title)}${v.vid ? '' : '（無影片，略過）'}</li>`).join('');
+  $('#ytDlg').hidden = false;
+  document.body.style.overflow = 'hidden';
+}
+function closeYTDlg() {
+  $('#ytDlg').hidden = true;
+  document.body.style.overflow = '';
+}
+function goYT() {
+  const url = ytListUrl();
+  closeYTDlg();
+  if (!url) return;
+  try { if (P.player && P.player.getPlayerState() === YT.PlayerState.PLAYING) P.player.pauseVideo(); } catch (e) {}
+  if (inLINE()) liff.openWindow({ url, external: true });   // 交給手機外部開啟，才能進入 YouTube App
+  else window.open(url, '_blank', 'noopener');
+}
+
 /* ═════════════ LINE ═════════════ */
 let liffOK = false;                                    // liff.init 成功後才使用 LINE 功能
 function inLINE() { return liffOK && liff.isInClient(); }
@@ -1580,6 +1625,7 @@ $('#main').addEventListener('click', e => {
   }
   if (e.target.closest('#bPanel')) { cyclePanel(); return; }
   if (e.target.closest('#bShare')) return share(P.cur);
+  if (e.target.closest('#bYT')) return openYTDlg();
   if (e.target.closest('[data-fsv]') || e.target.closest('#sheetPages img')) return openViewer();
   const kc = e.target.closest('[data-sv]');
   if (kc) { SHEET_SEL[S.view[P.cur].name] = kc.dataset.sv; renderPanels(); return; }
@@ -1592,6 +1638,9 @@ $('#main').addEventListener('click', e => {
   }
 });
 
+$('#ytClose').addEventListener('click', closeYTDlg);
+$('#ytGo').addEventListener('click', goYT);
+$('#ytDlg').addEventListener('click', e => { if (e.target.id === 'ytDlg') closeYTDlg(); });
 $('#rClose').addEventListener('click', closeReport);
 $('#report').addEventListener('click', e => { if (e.target.id === 'report') closeReport(); });
 $('#rType').addEventListener('click', e => {
