@@ -250,7 +250,9 @@
   /* 歌詞搜尋結果：符合的那一行（粗體）＋前後各一行（灰色） */
   .lib-list .hit { margin-top: 6px; padding: 6px 10px; border-left: 3px solid var(--orange); border-radius: 0 8px 8px 0;
                    font-size: calc(14px * var(--fz)); line-height: 1.6; background: var(--gray-1); }
+  .lib-list .hit > div { margin: 0; padding: 0; }   /* 每一行上下不留空白，不受其他同名樣式影響 */
   .lib-list .hit .near { color: var(--gray-4); }   /* 不可用 .ctx：會套到使用回饋的 margin-bottom，造成空行 */
+  .lib-head .ver { flex: 0 0 auto; font-size: 11px; color: var(--gray-3); }
   .lib-list .hit .m { font-weight: 800; color: var(--black); }
   .lib-list .hit mark { padding: 0 1px; border-radius: 3px; color: inherit; background: #FFD99A; }
   .lib-empty { padding: 30px 16px; text-align: center; color: var(--gray-4); }
@@ -388,6 +390,7 @@ const LIFF_ID = '2007843015-jGJQsDWB';             // LINE 登入與分享；使
 const SUNDAY_SWITCH_HOUR = 13;                     // 主日當天幾點後切換到下一週
 const OTHER_SWITCH_HOUR = 22;                      // 非主日聚會當天幾點後視為結束
 const SITE_PARAM = { main: '本堂', xinxiu: '新秀', me: '個人', lib: '曲目' };
+const APP_VER = '1106b';                           // 版本號：顯示在曲目查詢右上方，用來確認手機載入的是新版
 const LYR_FUZZ = 0.8;                              // 歌詞搜尋「一般」門檻：每 5 個字容許錯 1 個字（1 = 必須完全相符）
 const LYR_FUZZ_LOOSE = 0.7;                        // 一般找不到任何歌時，自動改用「寬鬆」再找一次
 
@@ -1658,7 +1661,7 @@ function renderLibInner() {
   const head = LIB.q ? `${LIB.lyr ? '歌詞' : '歌名'}找到 ${list.length} 首` : `共 ${list.length} 首`;
   main.innerHTML = `
     ${LIB.loose ? '<div class="lib-note">找不到完全符合的歌詞，以下是相近的結果</div>' : ''}
-    <div class="lib-head"><span>${head}｜點選歌曲加入練習清單</span></div>
+    <div class="lib-head"><span>${head}｜點選歌曲加入練習清單</span><span class="ver">v${APP_VER}</span></div>
     <section class="card">${noLyr ? '<div class="lib-empty">曲庫資料沒有歌詞，請更新 GAS 的曲庫回傳內容</div>'
       : list.length ? `<ul class="lib-list">${list.map(row).join('')}</ul>` : '<div class="lib-empty">找不到符合的歌曲</div>'}</section>
     <div class="lib-pad"></div>`;
