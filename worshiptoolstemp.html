@@ -250,7 +250,7 @@
   /* 歌詞搜尋結果：符合的那一行（粗體）＋前後各一行（灰色） */
   .lib-list .hit { margin-top: 6px; padding: 6px 10px; border-left: 3px solid var(--orange); border-radius: 0 8px 8px 0;
                    font-size: calc(14px * var(--fz)); line-height: 1.6; background: var(--gray-1); }
-  .lib-list .hit .ctx { color: var(--gray-4); }
+  .lib-list .hit .near { color: var(--gray-4); }   /* 不可用 .ctx：會套到使用回饋的 margin-bottom，造成空行 */
   .lib-list .hit .m { font-weight: 800; color: var(--black); }
   .lib-list .hit mark { padding: 0 1px; border-radius: 3px; color: inherit; background: #FFD99A; }
   .lib-empty { padding: 30px 16px; text-align: center; color: var(--gray-4); }
@@ -1538,7 +1538,8 @@ function lyrIndex(s) {
   if (LYR_IDX.src !== LIB.data) LYR_IDX = { src: LIB.data, map: new Map() };
   let x = LYR_IDX.map.get(s.name);
   if (!x) {
-    const lines = lyricLines(s.lyrics).filter(l => l && !LABEL_RE.test(l));   // 略過段落名稱與空行
+    // 略過段落名稱與空行；只有全形空白、零寬字元或標點的行也視為空行
+    const lines = lyricLines(s.lyrics).filter(l => normLyr(l) && !LABEL_RE.test(l));
     let text = ''; const lineOf = [];                // lineOf[第幾個字] = 第幾行，用來找回原句
     lines.forEach((l, k) => { const n = normLyr(l); text += n; for (let c = 0; c < n.length; c++) lineOf.push(k); });
     x = { lines, text, lineOf };
@@ -1608,7 +1609,7 @@ function snippetHTML(lines, a, b, raw) {
   let h = '';
   for (let k = from; k <= to; k++) {
     const hit = k >= a && k <= b;
-    h += `<div class="${hit ? 'm' : 'ctx'}">${hit ? hlLine(lines[k], raw) : esc(lines[k])}</div>`;
+    h += `<div class="${hit ? 'm' : 'near'}">${hit ? hlLine(lines[k], raw) : esc(lines[k])}</div>`;
   }
   return h;
 }
