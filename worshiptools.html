@@ -69,7 +69,7 @@
   .roster-toggle { display: flex; align-items: center; gap: 4px; margin-top: 12px; padding: 6px 0 0; width: 100%;
                    border-top: 1px dashed var(--gray-2); font-size: calc(16px * var(--fz)); font-weight: 600; color: var(--blue); }
   .roster-toggle svg { transition: transform .2s; }
-  .roster-toggle.open svg { transform: rotate(180deg); }
+  .roster-toggle.open svg { transform: rotate(180deg); }
   .roster { margin-top: 8px; }
 
   /* ── 播放器卡：影片 → 功能鈕 → 歌詞／歌譜 → 曲目清單 ── */
@@ -220,11 +220,18 @@
   .me-state .act:disabled { opacity: .5; }
 
   /* ── 曲目查詢 ── */
-  .libbar { padding: 10px 16px; }
-  .libbar input { width: 100%; height: 44px; padding: 0 14px 0 40px; border-radius: 12px; border: 1.5px solid var(--gray-2); font: inherit; font-size: 16px;
-                  background: var(--gray-1) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%236B7A8D' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-4-4'/%3E%3C/svg%3E") no-repeat 13px center; }
-  .libbar input:focus { outline: none; border-color: var(--blue); background-color: #fff; }
+  .libbar { display: flex; align-items: center; gap: 10px; padding: 10px 16px; }
+  /* 只套用在搜尋欄，避免連「搜尋歌詞」核選方塊也被放大 */
+  #libQ { flex: 1; min-width: 0; height: 44px; padding: 0 14px 0 40px; border-radius: 12px; border: 1.5px solid var(--gray-2); font: inherit; font-size: 16px;
+          background: var(--gray-1) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%236B7A8D' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-4-4'/%3E%3C/svg%3E") no-repeat 13px center; }
+  #libQ:focus { outline: none; border-color: var(--blue); background-color: #fff; }
+  #libQ::placeholder { color: var(--gray-3); }        /* 預設提示文字一律灰色 */
+  .lyr-toggle { flex: 0 0 auto; display: flex; align-items: center; gap: 5px; font-size: 14px; font-weight: 700; color: var(--gray-4);
+                white-space: nowrap; cursor: pointer; user-select: none; -webkit-user-select: none; }
+  .lyr-toggle input { width: 18px; height: 18px; accent-color: var(--blue); }
+  .lyr-toggle:has(input:checked) { color: var(--blue); }
   .lib-head { display: flex; align-items: center; justify-content: space-between; margin: 0 4px 8px; font-size: 13px; color: var(--gray-4); }
+  .lib-note { margin: 0 4px 8px; padding: 8px 12px; border-radius: 10px; font-size: 13px; font-weight: 700; color: #9A5A12; background: var(--orange-lt); }
   .lib-list { list-style: none; padding: 0 12px; }
   .lib-list li { display: flex; align-items: center; gap: 12px; padding: 12px 2px; border-bottom: 1px solid var(--gray-2); cursor: pointer; }
   .lib-list li:last-child { border-bottom: 0; }
@@ -240,6 +247,14 @@
   .lib-list .tag.new { color: var(--orange); background: var(--orange-lt); }
   .lib-list .tag.next { color: var(--blue-dk); background: var(--blue-lt); }
   .lib-list .keys { flex: 0 0 auto; max-width: 30%; text-align: right; font-size: 11px; font-weight: 700; color: var(--gray-4); }
+  /* 歌詞搜尋結果：符合的那一行（粗體）＋前後各一行（灰色） */
+  .lib-list .hit { margin-top: 6px; padding: 6px 10px; border-left: 3px solid var(--orange); border-radius: 0 8px 8px 0;
+                   font-size: calc(14px * var(--fz)); line-height: 1.6; background: var(--gray-1); }
+  .lib-list .hit > div { margin: 0; padding: 0; }   /* 每一行上下不留空白，不受其他同名樣式影響 */
+  .lib-list .hit .near { color: var(--gray-4); }   /* 不可用 .ctx：會套到使用回饋的 margin-bottom，造成空行 */
+  .lib-head .ver { flex: 0 0 auto; font-size: 11px; color: var(--gray-3); }
+  .lib-list .hit .m { font-weight: 800; color: var(--black); }
+  .lib-list .hit mark { padding: 0 1px; border-radius: 3px; color: inherit; background: #FFD99A; }
   .lib-empty { padding: 30px 16px; text-align: center; color: var(--gray-4); }
   .selbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; display: flex; align-items: center; gap: 8px;
             padding: 10px 16px; padding-bottom: max(10px, env(safe-area-inset-bottom)); background: #fff; box-shadow: 0 -2px 12px rgba(26,33,48,.12); }
@@ -300,7 +315,8 @@
   </nav>
   <div class="dates" id="dates"></div>
   <div class="libbar" id="libbar" hidden>
-    <input id="libQ" type="search" placeholder="搜尋歌名或出處（例如：讚美之泉）" autocomplete="off" enterkeyhint="search">
+    <input id="libQ" type="search" placeholder="搜尋歌名" autocomplete="off" enterkeyhint="search">
+    <label class="lyr-toggle"><input type="checkbox" id="libLyr">搜尋歌詞</label>
   </div>
 </div>
 
@@ -374,6 +390,9 @@ const LIFF_ID = '2007843015-jGJQsDWB';             // LINE 登入與分享；使
 const SUNDAY_SWITCH_HOUR = 13;                     // 主日當天幾點後切換到下一週
 const OTHER_SWITCH_HOUR = 22;                      // 非主日聚會當天幾點後視為結束
 const SITE_PARAM = { main: '本堂', xinxiu: '新秀', me: '個人', lib: '曲目' };
+const APP_VER = '1106b';                           // 版本號：顯示在曲目查詢右上方，用來確認手機載入的是新版
+const LYR_FUZZ = 0.8;                              // 歌詞搜尋「一般」門檻：每 5 個字容許錯 1 個字（1 = 必須完全相符）
+const LYR_FUZZ_LOOSE = 0.7;                        // 一般找不到任何歌時，自動改用「寬鬆」再找一次
 
 /* ═════════════ 狀態 ═════════════ */
 const S = { data: null, site: '本堂', date: null, view: [] };
@@ -1457,11 +1476,11 @@ async function applyMe(btn) {
 }
 
 /* ═════════════ 曲目查詢 ═════════════
- * 列表：搜尋歌名或出處、點選加入（左側顯示順序）
+ * 列表：搜尋歌名（或勾選「搜尋歌詞」改搜歌詞）、點選加入（左側顯示順序）
  * 練習：已選的歌依選取順序，放進與主日歌單相同的播放器
  */
 const LIB_KEY = 'wt_lib_v1';
-const LIB = { data: null, q: '', sel: [], mode: 'list', loading: false, error: '' };
+const LIB = { data: null, q: '', sel: [], mode: 'list', loading: false, error: '', lyr: readPref('liblyr') === '1', hits: null, loose: false };
 (function () {
   try { const c = JSON.parse(localStorage.getItem(LIB_KEY) || 'null'); if (c && Array.isArray(c.songs)) LIB.data = c; } catch (e) {}
   try { LIB.sel = JSON.parse(localStorage.getItem('wt_libsel') || '[]'); } catch (e) {}
@@ -1494,10 +1513,108 @@ const daysAgo = (iso) => iso ? Math.floor((Date.now() - toDate(iso).getTime()) /
 const ymdSlash = (iso) => iso ? iso.replace(/-/g, '/') : '';
 
 function libMatches() {
-  const q = LIB.q.trim().toLowerCase().replace(/\s+/g, '');
   const all = LIB.data.songs.slice().sort((a, b) => ZH.compare(a.title, b.title));
+  LIB.loose = false;
+  if (LIB.lyr) return lyrMatches(all);
+  LIB.hits = null;
+  const q = LIB.q.trim().toLowerCase().replace(/\s+/g, '');
   if (!q) return all;
-  return all.filter(s => (s.title + s.source + s.name).toLowerCase().replace(/\s+/g, '').includes(q));
+  return all.filter(s => String(s.title || '').toLowerCase().replace(/\s+/g, '').includes(q));   // 只搜尋歌名
+}
+
+/* ═════════════ 歌詞模糊搜尋 ═════════════
+ * 1. 正規化：去掉標點空白，祢／妳→你、祂／她／它／牠→他、裏→裡
+ * 2. 先找完全相符；找不到再用「近似片段」比對，容許錯 floor(字數 × (1 − 門檻)) 個字
+ * 3. 先用「一般」門檻；0 首時自動改用「寬鬆」並顯示提示
+ * 4. 整首歌詞串成一段比對，跨兩句的片段也找得到
+ */
+// 標點與符號（半形、全形、中文標點、各種引號破折號）：不用 \p{P}，避免舊手機無法解析而整頁失效
+const LYR_PUNCT = /[\s\u0021-\u002F\u003A-\u0040\u005B-\u0060\u007B-\u007E\u00A0-\u00BF\u2000-\u206F\u2E00-\u2E7F\u3000-\u303F\uFE30-\uFE4F\uFF00-\uFF0F\uFF1A-\uFF20\uFF3B-\uFF40\uFF5B-\uFF65]/g;
+function normLyr(s) {
+  return String(s || '').toLowerCase()
+    .replace(/[祢妳]/g, '你').replace(/[祂她它牠]/g, '他').replace(/裏/g, '裡')
+    .replace(LYR_PUNCT, '');
+}
+
+let LYR_IDX = { src: null, map: new Map() };       // 每首歌的正規化歌詞，曲庫更新時自動重建
+function lyrIndex(s) {
+  if (LYR_IDX.src !== LIB.data) LYR_IDX = { src: LIB.data, map: new Map() };
+  let x = LYR_IDX.map.get(s.name);
+  if (!x) {
+    // 略過段落名稱與空行；只有全形空白、零寬字元或標點的行也視為空行
+    const lines = lyricLines(s.lyrics).filter(l => normLyr(l) && !LABEL_RE.test(l));
+    let text = ''; const lineOf = [];                // lineOf[第幾個字] = 第幾行，用來找回原句
+    lines.forEach((l, k) => { const n = normLyr(l); text += n; for (let c = 0; c < n.length; c++) lineOf.push(k); });
+    x = { lines, text, lineOf };
+    LYR_IDX.map.set(s.name, x);
+  }
+  return x;
+}
+
+/** 在 text 中找與 q 最接近的片段；回傳 { err: 錯幾個字, end: 結束位置 }，超過容錯則回傳 null */
+function fuzzyFind(q, text, maxErr) {
+  const hit = text.indexOf(q);
+  if (hit > -1) return { err: 0, end: hit + q.length - 1 };
+  if (!maxErr) return null;
+  const m = q.length;
+  let prev = new Int32Array(m + 1), cur = new Int32Array(m + 1);
+  for (let i = 0; i <= m; i++) prev[i] = i;
+  let best = Infinity, end = -1;
+  for (let j = 0; j < text.length; j++) {
+    const c = text[j];
+    cur[0] = 0;                                      // 片段可以從歌詞任何位置開始
+    for (let i = 1; i <= m; i++) {
+      cur[i] = Math.min(prev[i - 1] + (q[i - 1] === c ? 0 : 1), prev[i] + 1, cur[i - 1] + 1);
+    }
+    if (cur[m] < best) { best = cur[m]; end = j; if (best === 1) break; }   // 已排除完全相符，錯 1 字就是最佳
+    [prev, cur] = [cur, prev];
+  }
+  return best <= maxErr ? { err: best, end } : null;
+}
+
+/** 原句中標出使用者輸入的字（只有完全相同的片段會標色） */
+function hlLine(line, raw) {
+  const i = raw ? line.toLowerCase().indexOf(raw.toLowerCase()) : -1;
+  if (i < 0) return esc(line);
+  return esc(line.slice(0, i)) + '<mark>' + esc(line.slice(i, i + raw.length)) + '</mark>' + esc(line.slice(i + raw.length));
+}
+
+/** 歌詞搜尋：先用「一般」門檻；0 首時自動改用「寬鬆」 */
+function lyrMatches(all) {
+  LIB.hits = new Map();
+  const q = normLyr(LIB.q);
+  if (!q) return all;
+  let out = lyrSearch(all, q, LYR_FUZZ);
+  if (!out.length && LYR_FUZZ_LOOSE < LYR_FUZZ) {
+    out = lyrSearch(all, q, LYR_FUZZ_LOOSE);
+    LIB.loose = out.length > 0;                    // 放寬後有結果才顯示提示
+  }
+  return out;
+}
+
+function lyrSearch(all, q, fuzz) {
+  const maxErr = Math.floor(q.length * (1 - fuzz) + 1e-9);   // 加 1e-9 避免浮點誤差（10 × 0.2 算成 1.999…）
+  const raw = LIB.q.trim(), out = [];
+  for (const s of all) {
+    if (!s.lyrics) continue;
+    const x = lyrIndex(s), r = fuzzyFind(q, x.text, maxErr);
+    if (!r) continue;
+    const a = x.lineOf[Math.max(0, r.end - q.length + 1)], b = x.lineOf[r.end];   // 符合片段的起訖行
+    LIB.hits.set(s.name, { err: r.err, html: snippetHTML(x.lines, a, b, raw) });
+    out.push(s);
+  }
+  return out.sort((p, n) => LIB.hits.get(p.name).err - LIB.hits.get(n.name).err);   // 錯越少越前面，同分維持歌名順序
+}
+
+/** 符合的行（a～b）用粗體，前後各多顯示一行灰字 */
+function snippetHTML(lines, a, b, raw) {
+  const from = Math.max(0, a - 1), to = Math.min(lines.length - 1, b + 1);
+  let h = '';
+  for (let k = from; k <= to; k++) {
+    const hit = k >= a && k <= b;
+    h += `<div class="${hit ? 'm' : 'near'}">${hit ? hlLine(lines[k], raw) : esc(lines[k])}</div>`;
+  }
+  return h;
 }
 
 function renderLib() {
@@ -1528,19 +1645,25 @@ function renderLibInner() {
     const tags = [];
     if (s.next) tags.push(`<span class="tag next">已排 ${md(s.next)}</span>`);
     else if (daysAgo(s.last) > 182) tags.push('<span class="tag new">半年未唱</span>');   // 依主領須知，半年未唱視為新歌
+    const h = LIB.hits && LIB.hits.get(s.name);    // 歌詞搜尋：符合的那一行與前後各一行
     return `<li class="${n > -1 ? 'on' : ''}" data-lib="${esc(s.name)}">
       <span class="pick">${n > -1 ? n + 1 : ''}</span>
       <div class="body">
         <div class="tt">${esc(s.title)}</div>
         ${s.source ? `<div class="so">${esc(s.source)}</div>` : ''}
         ${meta.length || tags.length ? `<div class="meta">${tags.join('')}${meta.map(m => `<span>${m}</span>`).join('')}</div>` : ''}
+        ${h ? `<div class="hit">${h.html}</div>` : ''}
       </div>
       ${keys.length ? `<span class="keys">${keys.map(esc).join(' ')}</span>` : ''}
     </li>`;
   };
+  const noLyr = LIB.lyr && !LIB.data.songs.some(s => s.lyrics);
+  const head = LIB.q ? `${LIB.lyr ? '歌詞' : '歌名'}找到 ${list.length} 首` : `共 ${list.length} 首`;
   main.innerHTML = `
-    <div class="lib-head"><span>${LIB.q ? `找到 ${list.length} 首` : `共 ${list.length} 首`}｜點選歌曲加入練習清單</span></div>
-    <section class="card">${list.length ? `<ul class="lib-list">${list.map(row).join('')}</ul>` : '<div class="lib-empty">找不到符合的歌曲</div>'}</section>
+    ${LIB.loose ? '<div class="lib-note">找不到完全符合的歌詞，以下是相近的結果</div>' : ''}
+    <div class="lib-head"><span>${head}｜點選歌曲加入練習清單</span><span class="ver">v${APP_VER}</span></div>
+    <section class="card">${noLyr ? '<div class="lib-empty">曲庫資料沒有歌詞，請更新 GAS 的曲庫回傳內容</div>'
+      : list.length ? `<ul class="lib-list">${list.map(row).join('')}</ul>` : '<div class="lib-empty">找不到符合的歌曲</div>'}</section>
     <div class="lib-pad"></div>`;
   renderSelbar();
 }
@@ -1604,9 +1727,23 @@ document.querySelector('.tabs').addEventListener('click', e => {
   if (S.site === '曲目') loadLib();
 });
 
+/** 搜尋歌詞核選方塊：切換提示文字，選擇記在本機 */
+function applyLyrMode() {
+  $('#libLyr').checked = LIB.lyr;
+  $('#libQ').placeholder = LIB.lyr ? '搜尋歌詞' : '搜尋歌名';
+}
+applyLyrMode();
+$('#libLyr').addEventListener('change', e => {
+  LIB.lyr = e.target.checked;
+  writePref('liblyr', LIB.lyr ? '1' : '0');
+  applyLyrMode();
+  if (S.site === '曲目' && LIB.mode === 'list' && LIB.data) renderLib();
+});
+let libTimer = 0;
 $('#libQ').addEventListener('input', e => {
   LIB.q = e.target.value;
-  if (S.site === '曲目' && LIB.mode === 'list' && LIB.data) renderLib();
+  clearTimeout(libTimer);                             // 歌詞搜尋計算較多，停止輸入 180ms 後才比對
+  libTimer = setTimeout(() => { if (S.site === '曲目' && LIB.mode === 'list' && LIB.data) renderLib(); }, LIB.lyr ? 180 : 0);
 });
 $('#libQ').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
 document.body.addEventListener('click', e => {
